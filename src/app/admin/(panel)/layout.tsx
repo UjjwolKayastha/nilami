@@ -63,32 +63,46 @@ export default async function AdminLayout({
   return (
     <div className="min-h-dvh bg-cream">
       <header className="sticky top-0 z-40 border-b border-ink/8 bg-ivory/90 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <div className="flex items-center gap-6">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-5">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-6">
             <Logo />
-            <span className="rounded-full bg-evergreen-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-evergreen-700">
+            <span className="hidden max-w-40 truncate rounded-full bg-evergreen-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-evergreen-700 sm:inline-block sm:max-w-none">
               {orgLabel}
             </span>
           </div>
-          <nav className="flex items-center gap-1">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full px-3.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-evergreen-50 hover:text-evergreen-800"
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-2">
+            <nav className="hidden items-center gap-1 md:flex">
+              {nav.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded-full px-3.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-evergreen-50 hover:text-evergreen-800"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
             <form action={signOut}>
-              <button className="ml-2 rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger">
+              <button className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger">
                 Sign out
               </button>
             </form>
-          </nav>
+          </div>
         </div>
+        {/* Scrollable nav strip for phones and small tablets */}
+        <nav className="flex items-center gap-1 overflow-x-auto border-t border-ink/8 px-3 py-2 md:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {nav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium text-ink-soft transition-colors hover:bg-evergreen-50 hover:text-evergreen-800"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
       </header>
-      <main className="mx-auto max-w-6xl px-5 py-10">{children}</main>
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10">{children}</main>
     </div>
   );
 }

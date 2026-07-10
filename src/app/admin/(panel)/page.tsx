@@ -59,7 +59,7 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="space-y-10">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight text-evergreen-900">
             Overview
@@ -70,7 +70,7 @@ export default async function AdminOverviewPage() {
         </div>
         <Link
           href="/admin/properties/new"
-          className="rounded-full bg-evergreen-800 px-5 py-2.5 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+          className="shrink-0 self-start rounded-full bg-evergreen-800 px-5 py-2.5 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700 sm:self-auto"
         >
           + New property
         </Link>

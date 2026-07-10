@@ -45,7 +45,7 @@ export default async function AuctionsPage({
 
   const active = Object.entries(params).filter(([, v]) => v);
   const selectCls =
-    "h-11 rounded-xl border border-ink/12 bg-ivory px-3 text-sm outline-none focus:border-evergreen-600";
+    "h-11 w-full rounded-xl border border-ink/12 bg-ivory px-3 text-sm outline-none focus:border-evergreen-600 sm:w-auto";
 
   return (
     <>
@@ -73,7 +73,7 @@ export default async function AuctionsPage({
             name="q"
             defaultValue={params.q ?? ""}
             placeholder={t.listing.searchPlaceholder}
-            className="h-11 min-w-52 flex-1 rounded-xl border border-ink/12 bg-ivory px-4 text-sm outline-none transition-colors focus:border-evergreen-600"
+            className="h-11 w-full flex-1 rounded-xl border border-ink/12 bg-ivory px-4 text-sm outline-none transition-colors focus:border-evergreen-600 sm:w-auto sm:min-w-52"
           />
           <select name="type" defaultValue={params.type ?? ""} className={selectCls}>
             {TYPES.map((o) => (
@@ -99,7 +99,7 @@ export default async function AuctionsPage({
           </select>
           <button
             type="submit"
-            className="h-11 rounded-xl bg-evergreen-800 px-6 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+            className="h-11 w-full rounded-xl bg-evergreen-800 px-6 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700 sm:w-auto"
           >
             {t.listing.apply}
           </button>

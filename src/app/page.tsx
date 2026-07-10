@@ -59,7 +59,7 @@ export default async function HomePage() {
                   {t.home.ctaHow}
                 </Link>
               </div>
-              <div className="rise rise-3 flex gap-10 pt-4">
+              <div className="rise rise-3 flex flex-wrap gap-x-8 gap-y-5 pt-4 sm:gap-10">
                 {[
                   { v: String(open.length), l: t.home.statOpen },
                   { v: nprCompact(totalValue, lang), l: t.home.statValue },

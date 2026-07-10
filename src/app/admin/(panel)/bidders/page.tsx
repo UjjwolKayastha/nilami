@@ -110,8 +110,8 @@ export default async function AdminBiddersPage() {
       </form>
 
       {/* Records table */}
-      <div className="overflow-hidden rounded-2xl border border-ink/8 bg-ivory shadow-card">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-ink/8 bg-ivory shadow-card">
+        <table className="w-full min-w-[680px] text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
               <th className="px-6 py-4">Bidder</th>

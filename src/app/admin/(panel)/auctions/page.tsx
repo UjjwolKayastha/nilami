@@ -26,7 +26,7 @@ export default async function AdminAuctionsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight text-evergreen-900">
             Auctions
@@ -37,14 +37,14 @@ export default async function AdminAuctionsPage() {
         </div>
         <Link
           href="/admin/auctions/new"
-          className="rounded-full bg-evergreen-800 px-5 py-2.5 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+          className="shrink-0 self-start rounded-full bg-evergreen-800 px-5 py-2.5 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700 sm:self-auto"
         >
           + New auction
         </Link>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-ink/8 bg-ivory shadow-card">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-ink/8 bg-ivory shadow-card">
+        <table className="w-full min-w-[680px] text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
               <th className="px-6 py-4">Property / notice</th>

@@ -1,3 +1,6 @@
+"use client";
+
+import { ImageUploader } from "@/components/admin/ImageUploader";
 import { upsertProperty } from "@/lib/admin/actions";
 import type { Property } from "@/lib/types";
 
@@ -25,11 +28,10 @@ function Field({
 
 export function PropertyForm({ property }: { property?: Property }) {
   const p = property;
-  const imageUrls = (p?.images ?? [])
+  const initialUrls = (p?.images ?? [])
     .slice()
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map((i) => i.url)
-    .join("\n");
+    .map((i) => i.url);
 
   return (
     <form
@@ -133,15 +135,10 @@ export function PropertyForm({ property }: { property?: Property }) {
             className="w-full rounded-xl border border-ink/15 bg-white p-3.5 text-sm outline-none transition-colors focus:border-evergreen-600"
           />
         </Field>
-        <Field label="Image URLs (one per line, first = cover)">
-          <textarea
-            name="image_urls"
-            rows={4}
-            defaultValue={imageUrls}
-            placeholder="https://…"
-            className="w-full rounded-xl border border-ink/15 bg-white p-3.5 font-mono text-xs outline-none transition-colors focus:border-evergreen-600"
-          />
-        </Field>
+        <div className="space-y-1.5">
+          <span className={labelCls}>Photographs</span>
+          <ImageUploader initialUrls={initialUrls} />
+        </div>
       </section>
 
       <div className="flex items-center gap-4 border-t border-ink/8 pt-6">

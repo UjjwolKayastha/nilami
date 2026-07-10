@@ -11,6 +11,50 @@ const labelCls =
 
 type Org = { id: string; name: string; pending?: boolean };
 
+// Common finance-sector words whose conventional Nepali spellings beat a raw
+// transliteration (especially abbreviations, which transliterate badly).
+const NP_WORD_OVERRIDES: Record<string, string> = {
+  ltd: "लि.",
+  "ltd.": "लि.",
+  pvt: "प्रा.",
+  "pvt.": "प्रा.",
+  limited: "लिमिटेड",
+  bank: "बैंक",
+  finance: "फाइनान्स",
+  microfinance: "माइक्रोफाइनान्स",
+  laghubitta: "लघुवित्त",
+  bittiya: "वित्तीय",
+  sanstha: "संस्था",
+  development: "डेभलपमेन्ट",
+  nepal: "नेपाल",
+};
+
+/** Latin → Devanagari via Google Input Tools; null when offline/unavailable. */
+async function transliterateToNepali(text: string): Promise<string | null> {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  try {
+    const parts = await Promise.all(
+      words.map(async (word) => {
+        const override = NP_WORD_OVERRIDES[word.toLowerCase()];
+        if (override) return override;
+        const res = await fetch(
+          "https://inputtools.google.com/request?itc=ne-t-i0-und&num=1&text=" +
+            encodeURIComponent(word),
+        );
+        if (!res.ok) throw new Error("transliteration unavailable");
+        const json = await res.json();
+        const candidate =
+          json?.[0] === "SUCCESS" ? json?.[1]?.[0]?.[1]?.[0] : null;
+        return typeof candidate === "string" && candidate ? candidate : word;
+      }),
+    );
+    return parts.join(" ");
+  } catch {
+    return null;
+  }
+}
+
 function AddInstitutionModal({
   onClose,
   onCreated,
@@ -25,6 +69,21 @@ function AddInstitutionModal({
   const [address, setAddress] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [npAuto, setNpAuto] = useState(false);
+  const [npBusy, setNpBusy] = useState(false);
+
+  async function autofillNepaliName() {
+    const source = name.trim();
+    // Never overwrite a Nepali name the user typed themselves.
+    if (!source || (nameNp && !npAuto)) return;
+    setNpBusy(true);
+    const np = await transliterateToNepali(source);
+    setNpBusy(false);
+    if (np) {
+      setNameNp(np);
+      setNpAuto(true);
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,6 +139,7 @@ function AddInstitutionModal({
               minLength={3}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onBlur={autofillNepaliName}
               placeholder="e.g. Machhapuchhre Finance Ltd."
               className={inputCls}
             />
@@ -88,10 +148,18 @@ function AddInstitutionModal({
             <span className={labelCls}>Name in Nepali</span>
             <input
               value={nameNp}
-              onChange={(e) => setNameNp(e.target.value)}
+              onChange={(e) => {
+                setNameNp(e.target.value);
+                setNpAuto(false);
+              }}
               placeholder="e.g. माछापुच्छ्रे फाइनान्स लि."
               className={inputCls}
             />
+            <p className="text-[11px] leading-relaxed text-ink-soft/80">
+              {npBusy
+                ? "Writing the name in Nepali…"
+                : "Fills in automatically from the English name — edit it freely."}
+            </p>
           </label>
           <label className="block space-y-1.5">
             <span className={labelCls}>Recovery dept. contact email *</span>

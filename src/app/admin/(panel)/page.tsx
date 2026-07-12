@@ -118,6 +118,9 @@ export default async function AdminOverviewPage() {
   })[];
 
   const open = aRows.filter((a) => a.status === "open");
+  const soldValue = aRows
+    .filter((a) => a.status === "sold")
+    .reduce((s, a) => s + (a.winning_amount ?? 0), 0);
   const openValue = open.reduce((s, a) => s + (a.minimum_bid ?? 0), 0);
   const pendingDeposits = bRows.filter(
     (b) => b.deposit_status === "pending"
@@ -237,19 +240,19 @@ export default async function AdminOverviewPage() {
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+        <section className="min-w-0 rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
           <h2 className="mb-5 font-semibold text-evergreen-900">
             Auctions by status
           </h2>
           <BarList items={statusBars} empty="No auctions yet." />
         </section>
-        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+        <section className="min-w-0 rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
           <h2 className="mb-5 font-semibold text-evergreen-900">
             Listings by type
           </h2>
           <BarList items={typeBars} empty="No properties yet." />
         </section>
-        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+        <section className="min-w-0 rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
           <h2 className="mb-5 font-semibold text-evergreen-900">
             Listings by district
           </h2>
@@ -259,7 +262,7 @@ export default async function AdminOverviewPage() {
 
       {/* Value by institution — platform admin only (org staff see just their own) */}
       {isPlatformAdmin && orgBars.length > 0 && (
-        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+        <section className="min-w-0 rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
           <h2 className="mb-5 font-semibold text-evergreen-900">
             Minimum-bid value by institution
           </h2>
@@ -269,7 +272,7 @@ export default async function AdminOverviewPage() {
 
       {/* Lists */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-ink/8 bg-ivory shadow-card">
+        <section className="min-w-0 rounded-2xl border border-ink/8 bg-ivory shadow-card">
           <h2 className="border-b border-ink/8 px-6 py-4 font-semibold text-evergreen-900">
             Upcoming bid openings
           </h2>
@@ -299,7 +302,7 @@ export default async function AdminOverviewPage() {
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-ink/8 bg-ivory shadow-card">
+        <section className="min-w-0 rounded-2xl border border-ink/8 bg-ivory shadow-card">
           <h2 className="border-b border-ink/8 px-6 py-4 font-semibold text-evergreen-900">
             Recent bidder interest
           </h2>

@@ -1,29 +1,159 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatDateTime, nprCompact } from "@/lib/format";
+import { formatDateTime, nprCompact, typeLabel } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Auction, AuctionStatus, BidderRecord, Property } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
+type Bar = { label: string; value: number; color: string };
+
+/** Server-rendered horizontal bar list (no client JS). */
+function BarList({
+  items,
+  fmt,
+  empty = "No data yet.",
+}: {
+  items: Bar[];
+  fmt?: (n: number) => string;
+  empty?: string;
+}) {
+  if (items.length === 0) {
+    return <p className="text-sm text-ink-soft">{empty}</p>;
+  }
+  const max = Math.max(1, ...items.map((i) => i.value));
+  return (
+    <div className="space-y-3">
+      {items.map((i) => (
+        <div
+          key={i.label}
+          className="grid grid-cols-[6.5rem_1fr_auto] items-center gap-3 sm:grid-cols-[8rem_1fr_auto]"
+        >
+          <span className="truncate text-sm text-ink" title={i.label}>
+            {i.label}
+          </span>
+          <span className="block h-2.5 overflow-hidden rounded-full bg-parchment">
+            <span
+              className={`block h-full rounded-full ${i.color}`}
+              style={{ width: `${Math.max(4, (i.value / max) * 100)}%` }}
+            />
+          </span>
+          <span className="min-w-8 text-right text-sm font-semibold tabular-nums text-evergreen-800">
+            {fmt ? fmt(i.value) : i.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function tally<T>(rows: T[], key: (r: T) => string | null | undefined) {
+  const m = new Map<string, number>();
+  for (const r of rows) {
+    const k = key(r) || "—";
+    m.set(k, (m.get(k) ?? 0) + 1);
+  }
+  return m;
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  open: "bg-evergreen-600",
+  upcoming: "bg-brass-500",
+  closed: "bg-ink-soft",
+  sold: "bg-evergreen-900",
+  draft: "bg-parchment",
+  cancelled: "bg-danger",
+};
+const TYPE_COLOR: Record<string, string> = {
+  land: "bg-evergreen-600",
+  house: "bg-evergreen-800",
+  commercial: "bg-brass-500",
+  apartment: "bg-brass-600",
+};
+const STATUS_ORDER = ["open", "upcoming", "closed", "sold", "draft", "cancelled"];
+
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("organization_id")
+    .eq("id", user!.id)
+    .single();
+  const isPlatformAdmin = profile?.organization_id == null;
+
   const [{ data: auctions }, { data: properties }, { data: bidders }] =
     await Promise.all([
-      supabase.from("auctions").select("*, property:properties(title, slug)"),
-      supabase.from("properties").select("id, is_published"),
+      supabase
+        .from("auctions")
+        .select(
+          "status, minimum_bid, appraised_value, winning_amount, opening_datetime, notice_number, submission_deadline, property:properties(title, slug, type, district, organization:organizations(name))"
+        ),
+      supabase
+        .from("properties")
+        .select("id, is_published, type, district"),
       supabase
         .from("bidder_records")
-        .select("*, auction:auctions(notice_number, property:properties(title))")
-        .order("created_at", { ascending: false })
-        .limit(6),
+        .select(
+          "id, full_name, deposit_status, created_at, auction:auctions(notice_number, property:properties(title))"
+        )
+        .order("created_at", { ascending: false }),
     ]);
 
-  const rows = (auctions ?? []) as (Auction & {
-    property: Pick<Property, "title" | "slug">;
+  type ARow = Auction & {
+    property: (Pick<Property, "title" | "slug" | "type" | "district"> & {
+      organization: { name: string } | null;
+    }) | null;
+  };
+  const aRows = (auctions ?? []) as unknown as ARow[];
+  const pRows = (properties ?? []) as Pick<
+    Property,
+    "id" | "is_published" | "type" | "district"
+  >[];
+  const bRows = (bidders ?? []) as unknown as (BidderRecord & {
+    auction: { notice_number: string; property: { title: string } | null } | null;
   })[];
-  const open = rows.filter((a) => a.status === "open");
-  const upcomingOpenings = rows
+
+  const open = aRows.filter((a) => a.status === "open");
+  const openValue = open.reduce((s, a) => s + (a.minimum_bid ?? 0), 0);
+  const pendingDeposits = bRows.filter(
+    (b) => b.deposit_status === "pending"
+  ).length;
+
+  // Chart data
+  const statusTally = tally(aRows, (a) => a.status);
+  const statusBars: Bar[] = STATUS_ORDER.filter((s) => statusTally.has(s)).map(
+    (s) => ({
+      label: s.charAt(0).toUpperCase() + s.slice(1),
+      value: statusTally.get(s)!,
+      color: STATUS_COLOR[s] ?? "bg-evergreen-600",
+    })
+  );
+  const typeBars: Bar[] = [...tally(pRows, (p) => p.type).entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => ({
+      label: typeLabel(k),
+      value: v,
+      color: TYPE_COLOR[k] ?? "bg-evergreen-600",
+    }));
+  const districtBars: Bar[] = [...tally(pRows, (p) => p.district).entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([k, v]) => ({ label: k, value: v, color: "bg-evergreen-600" }));
+
+  const orgValue = new Map<string, number>();
+  for (const a of aRows) {
+    const name = a.property?.organization?.name || "—";
+    orgValue.set(name, (orgValue.get(name) ?? 0) + (a.minimum_bid ?? 0));
+  }
+  const orgBars: Bar[] = [...orgValue.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => ({ label: k, value: v, color: "bg-brass-500" }));
+
+  const upcomingOpenings = aRows
     .filter((a) => ["open", "closed"].includes(a.status))
     .filter((a) => new Date(a.opening_datetime) > new Date())
     .sort(
@@ -32,33 +162,24 @@ export default async function AdminOverviewPage() {
         new Date(b.opening_datetime).getTime()
     )
     .slice(0, 5);
-  const soldValue = rows
-    .filter((a) => a.status === "sold")
-    .reduce((s, a) => s + (a.winning_amount ?? 0), 0);
-  const pendingDeposits = (bidders ?? []).filter(
-    (b) => b.deposit_status === "pending"
-  ).length;
 
   const stats = [
     { label: "Open auctions", value: String(open.length) },
     {
       label: "Listed properties",
-      value: String(properties?.length ?? 0),
-      sub: `${properties?.filter((p) => p.is_published).length ?? 0} published`,
+      value: String(pRows.length),
+      sub: `${pRows.filter((p) => p.is_published).length} published`,
     },
     {
-      label: "Recovered (sold)",
-      value: soldValue ? nprCompact(soldValue) : "—",
-      sub: "NPR",
+      label: "Open bid value",
+      value: openValue ? nprCompact(openValue) : "—",
+      accent: true,
     },
-    {
-      label: "Deposits awaiting review",
-      value: String(pendingDeposits),
-    },
+    { label: "Deposits awaiting review", value: String(pendingDeposits) },
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight text-evergreen-900">
@@ -76,19 +197,36 @@ export default async function AdminOverviewPage() {
         </Link>
       </div>
 
+      {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div
             key={s.label}
-            className="rounded-2xl border border-ink/8 bg-ivory p-5 shadow-card"
+            className={`rounded-2xl border p-5 shadow-card ${
+              s.accent
+                ? "border-transparent bg-evergreen-900"
+                : "border-ink/8 bg-ivory"
+            }`}
           >
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-ink-soft">
+            <p
+              className={`text-xs font-medium uppercase tracking-[0.14em] ${
+                s.accent ? "text-ivory/60" : "text-ink-soft"
+              }`}
+            >
               {s.label}
             </p>
-            <p className="font-display mt-2 text-3xl font-semibold text-evergreen-900">
+            <p
+              className={`font-display mt-2 text-3xl font-semibold ${
+                s.accent ? "text-brass-300" : "text-evergreen-900"
+              }`}
+            >
               {s.value}
               {s.sub && (
-                <span className="ml-2 text-xs font-normal text-ink-soft">
+                <span
+                  className={`ml-2 text-xs font-normal ${
+                    s.accent ? "text-ivory/55" : "text-ink-soft"
+                  }`}
+                >
                   {s.sub}
                 </span>
               )}
@@ -97,6 +235,39 @@ export default async function AdminOverviewPage() {
         ))}
       </div>
 
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+          <h2 className="mb-5 font-semibold text-evergreen-900">
+            Auctions by status
+          </h2>
+          <BarList items={statusBars} empty="No auctions yet." />
+        </section>
+        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+          <h2 className="mb-5 font-semibold text-evergreen-900">
+            Listings by type
+          </h2>
+          <BarList items={typeBars} empty="No properties yet." />
+        </section>
+        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+          <h2 className="mb-5 font-semibold text-evergreen-900">
+            Listings by district
+          </h2>
+          <BarList items={districtBars} empty="No properties yet." />
+        </section>
+      </div>
+
+      {/* Value by institution — platform admin only (org staff see just their own) */}
+      {isPlatformAdmin && orgBars.length > 0 && (
+        <section className="rounded-2xl border border-ink/8 bg-ivory p-6 shadow-card">
+          <h2 className="mb-5 font-semibold text-evergreen-900">
+            Minimum-bid value by institution
+          </h2>
+          <BarList items={orgBars} fmt={(n) => nprCompact(n)} />
+        </section>
+      )}
+
+      {/* Lists */}
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-ink/8 bg-ivory shadow-card">
           <h2 className="border-b border-ink/8 px-6 py-4 font-semibold text-evergreen-900">
@@ -108,9 +279,9 @@ export default async function AdminOverviewPage() {
                 No bid openings scheduled.
               </li>
             )}
-            {upcomingOpenings.map((a) => (
+            {upcomingOpenings.map((a, idx) => (
               <li
-                key={a.id}
+                key={`${a.notice_number}-${idx}`}
                 className="flex items-center justify-between gap-4 px-6 py-4"
               >
                 <div className="min-w-0">
@@ -133,14 +304,12 @@ export default async function AdminOverviewPage() {
             Recent bidder interest
           </h2>
           <ul className="divide-y divide-ink/8">
-            {(bidders ?? []).length === 0 && (
+            {bRows.length === 0 && (
               <li className="px-6 py-8 text-sm text-ink-soft">
                 No bidder records yet.
               </li>
             )}
-            {((bidders ?? []) as (BidderRecord & {
-              auction: { notice_number: string; property: { title: string } };
-            })[]).map((b) => (
+            {bRows.slice(0, 6).map((b) => (
               <li
                 key={b.id}
                 className="flex items-center justify-between gap-4 px-6 py-4"

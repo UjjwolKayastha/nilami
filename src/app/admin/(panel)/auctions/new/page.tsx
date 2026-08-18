@@ -1,14 +1,15 @@
 import { AuctionForm } from "@/components/admin/AuctionForm";
+import { getAdminScope } from "@/lib/admin/org";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewAuctionPage() {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("properties")
-    .select("id, title")
-    .order("title");
+  const { isPlatformAdmin, organizationId } = await getAdminScope();
+  let query = supabase.from("properties").select("id, title").order("title");
+  if (!isPlatformAdmin) query = query.eq("organization_id", organizationId);
+  const { data } = await query;
 
   return (
     <div className="mx-auto max-w-3xl space-y-8">

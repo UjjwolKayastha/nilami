@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
+import { getAdminScope } from "@/lib/admin/org";
 import { formatDateTime, nprCompact, typeLabel } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Auction, AuctionStatus, BidderRecord, Property } from "@/lib/types";
@@ -74,27 +75,27 @@ const STATUS_ORDER = ["open", "upcoming", "closed", "sold", "draft", "cancelled"
 
 export default async function AdminOverviewPage() {
   const supabase = await createClient();
+  const { isPlatformAdmin, organizationId } = await getAdminScope();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user!.id)
-    .single();
-  const isPlatformAdmin = profile?.organization_id == null;
+  // bidder_records is org-scoped by RLS; auctions and properties are not,
+  // because their SELECT policies stay open for the public site.
+  let auctionQuery = supabase
+    .from("auctions")
+    .select(
+      "status, minimum_bid, appraised_value, winning_amount, opening_datetime, notice_number, submission_deadline, property:properties!inner(title, slug, type, district, organization:organizations(name))"
+    );
+  let propertyQuery = supabase
+    .from("properties")
+    .select("id, is_published, type, district");
+  if (!isPlatformAdmin) {
+    auctionQuery = auctionQuery.eq("property.organization_id", organizationId);
+    propertyQuery = propertyQuery.eq("organization_id", organizationId);
+  }
 
   const [{ data: auctions }, { data: properties }, { data: bidders }] =
     await Promise.all([
-      supabase
-        .from("auctions")
-        .select(
-          "status, minimum_bid, appraised_value, winning_amount, opening_datetime, notice_number, submission_deadline, property:properties(title, slug, type, district, organization:organizations(name))"
-        ),
-      supabase
-        .from("properties")
-        .select("id, is_published, type, district"),
+      auctionQuery,
+      propertyQuery,
       supabase
         .from("bidder_records")
         .select(

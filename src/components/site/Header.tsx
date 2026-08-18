@@ -2,9 +2,14 @@ import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Logo } from "@/components/Logo";
 import { getT } from "@/lib/i18n/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function Header() {
   const { lang, t } = await getT();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const nav = [
     { href: "/auctions", label: t.nav.auctions },
     { href: "/how-it-works", label: t.nav.howItWorks },
@@ -29,7 +34,7 @@ export async function Header() {
             href="/admin"
             className="ml-1 hidden rounded-full border border-evergreen-800/25 px-4 py-2 text-sm font-medium text-evergreen-800 transition-colors hover:bg-evergreen-800 hover:text-ivory sm:block"
           >
-            {t.nav.staffSignIn}
+            {user ? t.nav.dashboard : t.nav.staffSignIn}
           </Link>
         </nav>
       </div>

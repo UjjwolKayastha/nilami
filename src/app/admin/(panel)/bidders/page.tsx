@@ -1,4 +1,6 @@
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { addBidder, deleteBidder, setBidderStatus } from "@/lib/admin/actions";
+import { getAdminScope } from "@/lib/admin/org";
 import { npr } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Auction, BidderRecord, Property } from "@/lib/types";
@@ -17,16 +19,23 @@ const statusStyles: Record<string, string> = {
 
 export default async function AdminBiddersPage() {
   const supabase = await createClient();
+  const { isPlatformAdmin, organizationId } = await getAdminScope();
+
+  // bidder_records is already org-scoped by RLS; the auction picker is not.
+  let auctionQuery = supabase
+    .from("auctions")
+    .select("id, notice_number, status, property:properties!inner(title, organization_id)")
+    .in("status", ["upcoming", "open", "closed"])
+    .order("submission_deadline");
+  if (!isPlatformAdmin)
+    auctionQuery = auctionQuery.eq("property.organization_id", organizationId);
+
   const [{ data: bidders }, { data: auctions }] = await Promise.all([
     supabase
       .from("bidder_records")
       .select("*, auction:auctions(notice_number, property:properties(title))")
       .order("created_at", { ascending: false }),
-    supabase
-      .from("auctions")
-      .select("id, notice_number, status, property:properties(title)")
-      .in("status", ["upcoming", "open", "closed"])
-      .order("submission_deadline"),
+    auctionQuery,
   ]);
 
   const rows = (bidders ?? []) as (BidderRecord & {
@@ -103,9 +112,12 @@ export default async function AdminBiddersPage() {
           <input name="notes" className={inputCls} />
         </label>
         <div className="flex items-end">
-          <button className="h-11 w-full rounded-xl bg-evergreen-800 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700">
+          <SubmitButton
+            pendingLabel="Adding…"
+            className="h-11 w-full rounded-xl bg-evergreen-800 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+          >
             Add record
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
@@ -166,16 +178,16 @@ export default async function AdminBiddersPage() {
                         <form key={s} action={setBidderStatus}>
                           <input type="hidden" name="id" value={b.id} />
                           <input type="hidden" name="deposit_status" value={s} />
-                          <button className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium capitalize text-ink transition-colors hover:border-evergreen-600 hover:text-evergreen-800">
+                          <SubmitButton className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium capitalize text-ink transition-colors hover:border-evergreen-600 hover:text-evergreen-800">
                             {s}
-                          </button>
+                          </SubmitButton>
                         </form>
                       ))}
                     <form action={deleteBidder}>
                       <input type="hidden" name="id" value={b.id} />
-                      <button className="rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-danger-soft hover:text-danger">
+                      <SubmitButton className="rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-danger-soft hover:text-danger">
                         Delete
-                      </button>
+                      </SubmitButton>
                     </form>
                   </div>
                 </td>

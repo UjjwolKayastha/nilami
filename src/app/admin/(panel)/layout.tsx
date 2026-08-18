@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { signOut } from "@/lib/admin/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,9 +39,12 @@ export default async function AdminLayout({
             Please check back later.
           </p>
           <form action={signOut}>
-            <button className="rounded-full border border-ink/15 px-6 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger">
+            <SubmitButton
+              pendingLabel="Signing out…"
+              className="rounded-full border border-ink/15 px-6 py-2.5 text-sm font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger"
+            >
               Sign out
-            </button>
+            </SubmitButton>
           </form>
         </div>
       </main>
@@ -83,9 +87,12 @@ export default async function AdminLayout({
               ))}
             </nav>
             <form action={signOut}>
-              <button className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger">
+              <SubmitButton
+                pendingLabel="Signing out…"
+                className="rounded-full border border-ink/15 px-4 py-2 text-sm font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger"
+              >
                 Sign out
-              </button>
+              </SubmitButton>
             </form>
           </div>
         </div>

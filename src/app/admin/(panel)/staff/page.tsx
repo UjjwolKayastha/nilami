@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { approveStaff, rejectStaff } from "@/lib/admin/actions";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,10 +17,11 @@ export default async function AdminStaffPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) redirect("/admin/login");
   const { data: me } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", user!.id)
+    .eq("id", user.id)
     .single();
   if (me?.organization_id !== null) redirect("/admin");
 
@@ -98,15 +100,21 @@ export default async function AdminStaffPage() {
                     <div className="flex items-center justify-end gap-2">
                       <form action={approveStaff}>
                         <input type="hidden" name="id" value={p.id} />
-                        <button className="rounded-full bg-evergreen-800 px-4 py-1.5 text-xs font-semibold text-ivory transition-colors hover:bg-evergreen-700">
+                        <SubmitButton
+                          pendingLabel="Approving…"
+                          className="rounded-full bg-evergreen-800 px-4 py-1.5 text-xs font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+                        >
                           Approve
-                        </button>
+                        </SubmitButton>
                       </form>
                       <form action={rejectStaff}>
                         <input type="hidden" name="id" value={p.id} />
-                        <button className="rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger">
+                        <SubmitButton
+                          pendingLabel="Rejecting…"
+                          className="rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger"
+                        >
                           Reject
-                        </button>
+                        </SubmitButton>
                       </form>
                     </div>
                   )}

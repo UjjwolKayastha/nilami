@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { PropertyForm } from "@/components/admin/PropertyForm";
-import { getAdminOrgContext } from "@/lib/admin/org";
+import { getAdminOrgContext, getAdminScope } from "@/lib/admin/org";
 import { createClient } from "@/lib/supabase/server";
 import type { Property } from "@/lib/types";
 
@@ -13,12 +13,14 @@ export default async function EditPropertyPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const { isPlatformAdmin, organizationId } = await getAdminScope();
+  let query = supabase
+    .from("properties")
+    .select("*, images:property_images(*)")
+    .eq("id", id);
+  if (!isPlatformAdmin) query = query.eq("organization_id", organizationId);
   const [{ data }, { organizations, lockedOrg }] = await Promise.all([
-    supabase
-      .from("properties")
-      .select("*, images:property_images(*)")
-      .eq("id", id)
-      .single(),
+    query.single(),
     getAdminOrgContext(),
   ]);
   if (!data) notFound();

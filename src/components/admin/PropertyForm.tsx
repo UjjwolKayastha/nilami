@@ -1,6 +1,7 @@
 "use client";
 
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { upsertProperty } from "@/lib/admin/actions";
 import type { Property } from "@/lib/types";
 
@@ -177,9 +178,12 @@ export function PropertyForm({
       </section>
 
       <div className="flex items-center gap-4 border-t border-ink/8 pt-6">
-        <button className="rounded-full bg-evergreen-800 px-7 py-3 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700">
+        <SubmitButton
+          pendingLabel={p ? "Saving…" : "Creating…"}
+          className="rounded-full bg-evergreen-800 px-7 py-3 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+        >
           {p ? "Save changes" : "Create property"}
-        </button>
+        </SubmitButton>
         <a href="/admin/properties" className="text-sm font-medium text-ink-soft hover:text-ink">
           Cancel
         </a>

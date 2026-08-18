@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { deleteProperty } from "@/lib/admin/actions";
+import { getAdminScope } from "@/lib/admin/org";
 import { typeLabel } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Property } from "@/lib/types";
@@ -9,10 +11,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPropertiesPage() {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { isPlatformAdmin, organizationId } = await getAdminScope();
+  let query = supabase
     .from("properties")
     .select("*, images:property_images(url, sort_order), organization:organizations(name)")
     .order("created_at", { ascending: false });
+  if (!isPlatformAdmin) query = query.eq("organization_id", organizationId);
+  const { data } = await query;
   const properties = (data ?? []) as Property[];
 
   return (
@@ -110,9 +115,9 @@ export default async function AdminPropertiesPage() {
                       </Link>
                       <form action={deleteProperty}>
                         <input type="hidden" name="id" value={p.id} />
-                        <button className="rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-danger-soft hover:text-danger">
+                        <SubmitButton className="rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:bg-danger-soft hover:text-danger">
                           Delete
-                        </button>
+                        </SubmitButton>
                       </form>
                     </div>
                   </td>

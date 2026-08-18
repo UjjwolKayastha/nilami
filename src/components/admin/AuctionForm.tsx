@@ -1,3 +1,4 @@
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { upsertAuction } from "@/lib/admin/actions";
 import type { Auction } from "@/lib/types";
 
@@ -142,9 +143,12 @@ export function AuctionForm({
       </Field>
 
       <div className="flex items-center gap-4 border-t border-ink/8 pt-6">
-        <button className="rounded-full bg-evergreen-800 px-7 py-3 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700">
+        <SubmitButton
+          pendingLabel={a ? "Saving…" : "Creating…"}
+          className="rounded-full bg-evergreen-800 px-7 py-3 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+        >
           {a ? "Save auction" : "Create auction"}
-        </button>
+        </SubmitButton>
         <a href="/admin/auctions" className="text-sm font-medium text-ink-soft hover:text-ink">
           Cancel
         </a>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PasswordInput } from "@/components/admin/PasswordInput";
 import { createClient } from "@/lib/supabase/client";
 
 const inputCls =
@@ -355,7 +356,7 @@ export function SignupForm({
         </label>
         <label className="block space-y-1.5">
           <span className={labelCls}>Password</span>
-          <input type="password" required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
+          <PasswordInput required minLength={8} autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} className={inputCls} />
         </label>
         {error && (
           <p className="rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">

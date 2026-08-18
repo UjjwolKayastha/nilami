@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/Logo";
+import { PasswordInput } from "@/components/admin/PasswordInput";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AdminLoginPage() {
@@ -73,8 +74,7 @@ export default function AdminLoginPage() {
             <span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-soft">
               Password
             </span>
-            <input
-              type="password"
+            <PasswordInput
               required
               autoComplete="current-password"
               value={password}

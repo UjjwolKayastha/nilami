@@ -38,10 +38,11 @@ export async function upsertProperty(formData: FormData) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  if (!user) throw new Error("You must be signed in to save a property.");
   const { data: profile } = await supabase
     .from("profiles")
     .select("organization_id")
-    .eq("id", user!.id)
+    .eq("id", user.id)
     .single();
   const organizationId =
     profile?.organization_id ??

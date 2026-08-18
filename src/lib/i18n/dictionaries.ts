@@ -5,6 +5,7 @@ const en = {
     auctions: "Auctions",
     howItWorks: "How it works",
     staffSignIn: "Staff sign in",
+    dashboard: "Dashboard",
   },
   common: {
     statuses: {
@@ -212,6 +213,7 @@ const ne: typeof en = {
     auctions: "निलामीहरू",
     howItWorks: "प्रक्रिया",
     staffSignIn: "कर्मचारी लगइन",
+    dashboard: "ड्यासबोर्ड",
   },
   common: {
     statuses: {

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { StatusBadge } from "@/components/StatusBadge";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { setAuctionStatus } from "@/lib/admin/actions";
+import { getAdminScope } from "@/lib/admin/org";
 import { formatDateTime, nprCompact } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Auction, AuctionStatus, Property } from "@/lib/types";
@@ -16,12 +18,16 @@ const nextActions: Partial<Record<AuctionStatus, { to: AuctionStatus; label: str
 
 export default async function AdminAuctionsPage() {
   const supabase = await createClient();
-  const { data } = await supabase
+  const { isPlatformAdmin, organizationId } = await getAdminScope();
+  let query = supabase
     .from("auctions")
-    .select("*, property:properties(title, slug)")
+    .select("*, property:properties!inner(title, slug, organization_id)")
     .order("submission_deadline", { ascending: true });
+  if (!isPlatformAdmin)
+    query = query.eq("property.organization_id", organizationId);
+  const { data } = await query;
   const auctions = (data ?? []) as (Auction & {
-    property: Pick<Property, "title" | "slug">;
+    property: Pick<Property, "title" | "slug" | "organization_id">;
   })[];
 
   return (
@@ -78,9 +84,9 @@ export default async function AdminAuctionsPage() {
                       <form key={act.to} action={setAuctionStatus}>
                         <input type="hidden" name="id" value={a.id} />
                         <input type="hidden" name="status" value={act.to} />
-                        <button className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:border-evergreen-600 hover:text-evergreen-800">
+                        <SubmitButton className="rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:border-evergreen-600 hover:text-evergreen-800">
                           {act.label}
-                        </button>
+                        </SubmitButton>
                       </form>
                     ))}
                     <Link

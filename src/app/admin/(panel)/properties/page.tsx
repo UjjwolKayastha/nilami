@@ -6,6 +6,7 @@ import { getAdminScope } from "@/lib/admin/org";
 import { typeLabel } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Property } from "@/lib/types";
+import { formatViews, hydrateViewCount, VIEW_STATS_SELECT } from "@/lib/views";
 
 export const dynamic = "force-dynamic";
 
@@ -14,11 +15,14 @@ export default async function AdminPropertiesPage() {
   const { isPlatformAdmin, organizationId } = await getAdminScope();
   let query = supabase
     .from("properties")
-    .select("*, images:property_images(url, sort_order), organization:organizations(name)")
+    .select(
+      `*, images:property_images(url, sort_order), organization:organizations(name), ${VIEW_STATS_SELECT}`
+    )
     .order("created_at", { ascending: false });
   if (!isPlatformAdmin) query = query.eq("organization_id", organizationId);
   const { data } = await query;
   const properties = (data ?? []) as Property[];
+  properties.forEach(hydrateViewCount);
 
   return (
     <div className="space-y-8">
@@ -40,7 +44,7 @@ export default async function AdminPropertiesPage() {
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-ink/8 bg-ivory shadow-card">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[780px] text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
               <th className="px-6 py-4">Property</th>
@@ -48,6 +52,7 @@ export default async function AdminPropertiesPage() {
               <th className="px-4 py-4">Type</th>
               <th className="px-4 py-4">District</th>
               <th className="px-4 py-4">Status</th>
+              <th className="px-4 py-4 text-right">Views</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -95,6 +100,12 @@ export default async function AdminPropertiesPage() {
                     >
                       {p.is_published ? "Published" : "Draft"}
                     </span>
+                  </td>
+                  <td
+                    className="px-4 py-3.5 text-right tabular-nums text-ink-soft"
+                    title="Views of this property's public listing"
+                  >
+                    {formatViews(p.view_count)}
                   </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center justify-end gap-2">

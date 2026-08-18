@@ -3,6 +3,8 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 
+import { logoPinWithCount, pinSize } from "./map-marker";
+
 export type DistrictPoint = {
   district: string;
   count: number;
@@ -18,18 +20,12 @@ const NEPAL_BOUNDS: [[number, number], [number, number]] = [
   [30.5, 88.3],
 ];
 
-function badge(count: number): { html: string; size: number } {
-  const size = Math.min(52, 30 + Math.round(Math.log2(count + 1) * 8));
-  const html = `
-    <div style="
-      width:${size}px;height:${size}px;
-      display:grid;place-items:center;
-      border-radius:9999px;
-      background:#c8a049;color:#0b2e22;
-      font:600 ${size > 40 ? 15 : 13}px/1 ui-sans-serif,system-ui,sans-serif;
-      box-shadow:0 0 0 4px rgba(200,160,73,.28),0 2px 8px rgba(0,0,0,.35);
-    ">${count}</div>`;
-  return { html, size };
+/** A logo pin whose size grows with how many properties the district holds. */
+function badge(count: number): { html: string; width: number; height: number } {
+  const { width, height } = pinSize(
+    Math.min(54, 34 + Math.round(Math.log2(count + 1) * 6))
+  );
+  return { html: logoPinWithCount(width, count), width, height };
 }
 
 export function NepalPropertyMap({
@@ -63,16 +59,16 @@ export function NepalPropertyMap({
       }).addTo(map);
 
       for (const p of points) {
-        const { html, size } = badge(p.count);
+        const { html, width, height } = badge(p.count);
         L.marker([p.lat, p.lng], {
           icon: L.divIcon({
             html,
             className: "",
-            // The badge must carry a real size, or the marker has no hit area
-            // and sits off-centre from its coordinate.
-            iconSize: [size, size],
-            iconAnchor: [size / 2, size / 2],
-            popupAnchor: [0, -size / 2],
+            // The pin must carry a real size, or the marker has no hit area
+            // and sits off-centre from its coordinate. Its tip is the anchor.
+            iconSize: [width, height],
+            iconAnchor: [width / 2, height],
+            popupAnchor: [0, -height],
           }),
           title: `${p.district} — ${p.label}`,
         })

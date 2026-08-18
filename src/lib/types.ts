@@ -14,10 +14,12 @@ export interface Organization {
   name: string;
   name_np: string;
   logo_url: string | null;
+  website: string | null;
   contact_email: string;
   contact_phone: string;
   address: string;
   address_np: string;
+  approved: boolean;
 }
 
 export interface PropertyImage {
@@ -57,6 +59,8 @@ export interface Property {
   updated_at: string;
   images?: PropertyImage[];
   organization?: Organization;
+  /** Detail-page views, joined from property_view_stats. Absent on admin reads. */
+  view_count?: number;
 }
 
 export interface Auction {

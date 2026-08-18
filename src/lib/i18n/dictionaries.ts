@@ -38,6 +38,8 @@ const en = {
       leftHM: (h: number, m: number) => `${h}h ${m}m left`,
     },
     soldDot: "Sold",
+    closedOn: (d: string) => `Closed ${d}`,
+    viewOnMap: "View on map",
   },
   home: {
     badge: "Official auction notices",
@@ -101,9 +103,21 @@ const en = {
     emptySub:
       "Try clearing a filter or check back soon — new notices are published regularly.",
   },
+  institution: {
+    verified: "Verified Partner",
+    contactToBid: "Contact to bid",
+    contactHint:
+      "Bids are submitted to the institution directly — Nilami publishes the notice.",
+    headOffice: "Head Office",
+    visitBank: "Visit Bank Auction",
+    enquire: "Contact to bid",
+    allFromBank: "View all auctions from this bank",
+  },
   detail: {
     breadcrumb: "Auctions",
     notice: "Notice",
+    views: (n: number) =>
+      n === 1 ? "1 view" : `${n.toLocaleString("en-IN")} views`,
     about: "About this property",
     video: "Video walkthrough",
     location: "Location",
@@ -141,6 +155,20 @@ const en = {
       "Bids are submitted in sealed form at the institution's recovery department with your bid-security voucher — this portal does not accept online bids.",
     contact: "Contact the institution",
     enquiry: "Enquiry",
+    share: {
+      title: "Share this listing",
+      facebook: "Facebook",
+      whatsapp: "WhatsApp",
+      viber: "Viber",
+      x: "X",
+      telegram: "Telegram",
+      linkedin: "LinkedIn",
+      email: "Email",
+      copy: "Copy",
+      copied: "Copied",
+      more: "Share…",
+      message: (title: string) => `Auction notice — ${title}`,
+    },
   },
   how: {
     kicker: "The process",
@@ -253,6 +281,8 @@ const ne: typeof en = {
       leftHM: (h: number, m: number) => `${h} घण्टा ${m} मिनेट बाँकी`,
     },
     soldDot: "बिक्री",
+    closedOn: (d: string) => `${d} मा बन्द`,
+    viewOnMap: "नक्सामा हेर्नुहोस्",
   },
   home: {
     badge: "आधिकारिक निलामी सूचनाहरू",
@@ -315,9 +345,20 @@ const ne: typeof en = {
     emptyTitle: "कुनै सम्पत्ति फेला परेन।",
     emptySub: "फिल्टर हटाएर हेर्नुहोस् वा पछि फेरि आउनुहोस् — नयाँ सूचनाहरू नियमित प्रकाशित हुन्छन्।",
   },
+  institution: {
+    verified: "प्रमाणित साझेदार",
+    contactToBid: "बोलका लागि सम्पर्क",
+    contactHint:
+      "बोलपत्र सिधै संस्थामा बुझाउनुपर्छ — निलामीले सूचना मात्र प्रकाशित गर्छ।",
+    headOffice: "प्रधान कार्यालय",
+    visitBank: "बैंकको निलामी हेर्नुहोस्",
+    enquire: "बोलका लागि सम्पर्क",
+    allFromBank: "यस बैंकका सबै निलामी हेर्नुहोस्",
+  },
   detail: {
     breadcrumb: "निलामीहरू",
     notice: "सूचना",
+    views: (n: number) => `${n.toLocaleString("en-IN")} पटक हेरिएको`,
     about: "यस सम्पत्तिबारे",
     video: "भिडियो अवलोकन",
     location: "स्थान",
@@ -355,6 +396,20 @@ const ne: typeof en = {
       "बोलपत्र धरौटी भौचरसहित सम्बन्धित संस्थाको असुली विभागमा शिलबन्दी रूपमा बुझाउनुपर्छ — यस पोर्टलमा अनलाइन बोल स्वीकार गरिँदैन।",
     contact: "संस्थालाई सम्पर्क गर्नुहोस्",
     enquiry: "जिज्ञासा",
+    share: {
+      title: "यो सूचना सेयर गर्नुहोस्",
+      facebook: "Facebook",
+      whatsapp: "WhatsApp",
+      viber: "Viber",
+      x: "X",
+      telegram: "Telegram",
+      linkedin: "LinkedIn",
+      email: "इमेल",
+      copy: "लिङ्क कपी",
+      copied: "कपी भयो",
+      more: "सेयर…",
+      message: (title: string) => `निलामी सूचना — ${title}`,
+    },
   },
   how: {
     kicker: "प्रक्रिया",

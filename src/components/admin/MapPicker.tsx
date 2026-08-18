@@ -3,12 +3,9 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 
-const PIN = `
-  <div style="
-    width:26px;height:26px;border-radius:9999px;
-    background:#c8a049;border:3px solid #0b2e22;
-    box-shadow:0 0 0 4px rgba(200,160,73,.3),0 2px 8px rgba(0,0,0,.35);
-  "></div>`;
+import { logoPin, pinSize } from "../map-marker";
+
+const PIN = pinSize(40);
 
 /**
  * Click (or drag the pin) to set a property's coordinates. Recentres when the
@@ -55,10 +52,11 @@ export function MapPicker({
       }).addTo(map);
 
       const icon = L.divIcon({
-        html: PIN,
+        html: logoPin(PIN.width),
         className: "",
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
+        iconSize: [PIN.width, PIN.height],
+        // The coordinate sits at the pin's tip, not its centre.
+        iconAnchor: [PIN.width / 2, PIN.height],
       });
 
       const place = (la: number, ln: number) => {

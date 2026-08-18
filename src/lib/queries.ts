@@ -1,13 +1,16 @@
+import { displayStatus } from "@/lib/auction-status";
 import { createClient } from "@/lib/supabase/server";
 import type { Auction, Property } from "@/lib/types";
+import { hydrateViewCount, VIEW_STATS_SELECT } from "@/lib/views";
 
 export type AuctionWithProperty = Auction & { property: Property };
 
-const AUCTION_SELECT =
-  "*, property:properties(*, images:property_images(*), organization:organizations(*))";
+const AUCTION_SELECT = `*, property:properties(*, images:property_images(*), organization:organizations(*), ${VIEW_STATS_SELECT})`;
 
-function sortImages(a: AuctionWithProperty) {
+/** Sort the gallery and flatten the view-counter join onto `property.view_count`. */
+function hydrate(a: AuctionWithProperty) {
   a.property.images?.sort((x, y) => x.sort_order - y.sort_order);
+  hydrateViewCount(a.property);
   return a;
 }
 
@@ -19,13 +22,11 @@ export async function getPublicAuctions(filters?: {
   q?: string;
 }): Promise<AuctionWithProperty[]> {
   const supabase = await createClient();
-  let query = supabase
+  const query = supabase
     .from("auctions")
     .select(AUCTION_SELECT)
     .neq("status", "draft")
     .order("submission_deadline", { ascending: true });
-
-  if (filters?.status) query = query.eq("status", filters.status);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -33,6 +34,10 @@ export async function getPublicAuctions(filters?: {
   let rows = (data as unknown as AuctionWithProperty[]).filter(
     (a) => a.property
   );
+  // Filtered on the displayed status, so "open" never returns an auction
+  // whose deadline has already gone by.
+  if (filters?.status)
+    rows = rows.filter((a) => displayStatus(a) === filters.status);
   if (filters?.type) rows = rows.filter((a) => a.property.type === filters.type);
   if (filters?.district)
     rows = rows.filter(
@@ -49,7 +54,7 @@ export async function getPublicAuctions(filters?: {
         a.property.municipality.toLowerCase().includes(q)
     );
   }
-  return rows.map(sortImages);
+  return rows.map(hydrate);
 }
 
 export async function getAuctionBySlug(
@@ -65,7 +70,7 @@ export async function getAuctionBySlug(
   const rows = (data as unknown as AuctionWithProperty[]).filter(
     (a) => a.property?.slug === slug
   );
-  return rows.length ? sortImages(rows[0]) : null;
+  return rows.length ? hydrate(rows[0]) : null;
 }
 
 export async function getDistricts(): Promise<string[]> {

@@ -3,8 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Countdown } from "@/components/Countdown";
 import { Gallery } from "@/components/Gallery";
+import { InstitutionCard } from "@/components/InstitutionCard";
 import { PropertyMap } from "@/components/PropertyMap";
+import { ShareListing } from "@/components/ShareListing";
 import { StatusBadge } from "@/components/StatusBadge";
+import { displayStatus } from "@/lib/auction-status";
+import { ViewCount } from "@/components/ViewCount";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import {
@@ -50,6 +54,8 @@ export default async function AuctionDetailPage({
   if (!auction) notFound();
   const p = auction.property;
   const org = p.organization;
+  // Staff-set status, corrected for a deadline that has already passed.
+  const status = displayStatus(auction);
   const f = t.detail.facts;
 
   const facts: [string, string][] = [
@@ -76,6 +82,7 @@ export default async function AuctionDetailPage({
   ];
 
   const contactEmail = org?.contact_email || "recovery@nilami.app";
+  const enquirySubject = `${t.detail.enquiry} — ${t.detail.notice} ${auction.notice_number}`;
   const video = videoEmbed(p.video_url);
   const hasPin = p.latitude != null && p.longitude != null;
 
@@ -97,10 +104,11 @@ export default async function AuctionDetailPage({
           <div className="space-y-10">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
-                <StatusBadge status={auction.status} lang={lang} />
+                <StatusBadge status={status} lang={lang} />
                 <span className="text-xs font-medium uppercase tracking-[0.16em] text-ink-soft">
                   {t.detail.notice} {auction.notice_number}
                 </span>
+                <ViewCount slug={slug} initial={p.view_count ?? 0} lang={lang} />
               </div>
               <h1 className="font-display text-4xl font-semibold leading-tight tracking-tight text-evergreen-900 sm:text-5xl">
                 {p.title}
@@ -156,7 +164,7 @@ export default async function AuctionDetailPage({
             )}
 
             {hasPin && (
-              <section>
+              <section id="location" className="scroll-mt-24">
                 <h2 className="font-display text-2xl font-semibold text-evergreen-900">
                   {t.detail.location}
                 </h2>
@@ -207,6 +215,12 @@ export default async function AuctionDetailPage({
                 ))}
               </div>
             </section>
+
+            <ShareListing
+              path={`/auctions/${slug}`}
+              title={p.title}
+              lang={lang}
+            />
           </div>
 
           {/* Right column — sticky bid panel */}
@@ -233,7 +247,7 @@ export default async function AuctionDetailPage({
                 ) : null}
               </div>
               <div className="space-y-6 p-7">
-                {auction.status === "open" && (
+                {status === "open" && (
                   <div>
                     <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
                       {t.detail.closesIn}
@@ -262,23 +276,29 @@ export default async function AuctionDetailPage({
                   </p>
                   <p className="mt-1.5">{t.detail.howToBidBody}</p>
                 </div>
-                <a
-                  href={`mailto:${contactEmail}?subject=${encodeURIComponent(
-                    `${t.detail.enquiry} — ${t.detail.notice} ${auction.notice_number}`
-                  )}`}
-                  className="block rounded-full bg-evergreen-800 py-3.5 text-center text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
-                >
-                  {t.detail.contact}
-                </a>
-                <p className="text-center text-xs text-ink-soft">
-                  {org
-                    ? [org.contact_phone, lang === "ne" && org.address_np ? org.address_np : org.address]
-                        .filter(Boolean)
-                        .join(" · ")
-                    : "+977 1 442 0000"}
-                </p>
+                {!org && (
+                  <a
+                    href={`mailto:${contactEmail}?subject=${encodeURIComponent(
+                      enquirySubject
+                    )}`}
+                    className="block rounded-full bg-evergreen-800 py-3.5 text-center text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+                  >
+                    {t.detail.contact}
+                  </a>
+                )}
               </div>
             </div>
+
+            {org && (
+              <div className="mt-6">
+                <InstitutionCard
+                  org={org}
+                  lang={lang}
+                  t={t}
+                  enquirySubject={enquirySubject}
+                />
+              </div>
+            )}
           </aside>
         </div>
       </main>

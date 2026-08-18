@@ -234,6 +234,22 @@ links inline. Anything else resolves to null and renders nothing, so an
 arbitrary URL cannot be dropped into an iframe — `javascript:` URLs and unknown
 hosts are rejected. Unit tested across all of those cases.
 
+### 15. Institution card on the listing page
+
+`src/components/InstitutionCard.tsx` in the detail page sidebar: logo, name, a
+"Verified Partner" badge driven by the existing `organizations.approved` flag,
+then the contact block — head office, address, `tel:` and `mailto:` rows — a
+primary action, and a link to every other auction from that institution.
+
+`logo_url` already existed but is null for all five institutions, so the card
+falls back to a monogram until one is set. The "Visit Bank Auction" action
+needed an outbound URL that did not exist, so `organizations.website` was added;
+while it is unset the primary button is a mailto enquiry prefilled with the
+notice number, so the card never has a dead primary action.
+
+There is still no admin screen for editing an institution, so `logo_url` and
+`website` can only be set directly in the database. Worth adding.
+
 ### Also
 
 - `src/components/site/Header.tsx` now resolves the session and shows
@@ -284,3 +300,24 @@ so platform admins (who have no organisation) can pick one, but it cannot tell
 "platform admin" apart from "profile read failed" — so a failed profile fetch
 would trust client input for the institution. RLS still blocks the write, so it is
 not exploitable today, but the two cases should be split explicitly.
+
+## Shipped alongside
+
+This commit also carries four workstreams developed in parallel in the same
+tree, verified together before release:
+
+- Social sharing on the listing page (Facebook, WhatsApp, Viber, X, Telegram,
+  LinkedIn, email, copy link) in both languages.
+- Per-listing view counters, in their own `property_view_stats` table so that
+  counting a view never stamps `updated_at` on the listing, with a read policy
+  that mirrors the listing's own visibility.
+- Nilami logo map pins replacing the plain markers, shared across the landing,
+  listing and picker maps, plus a backfill of map pins for the seeded listings.
+- Auction card fixes: location under the title, institution highlighted, and a
+  shared status helper so a notice can no longer read "Open for bids" and
+  "Deadline passed" at once.
+
+Two follow-ups those left open: the seeded pins are locality-accurate but four
+sit in a different ward than the listing claims, and the durable fix for status
+drift is server-side (a job flipping open → closed past the deadline) rather
+than display-time correction.

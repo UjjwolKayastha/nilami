@@ -4,6 +4,7 @@ import { NepalPropertyMap, type DistrictPoint } from "@/components/NepalProperty
 import { DISTRICT_COORDINATES } from "@/lib/nepal/district-coordinates";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
+import { displayStatus } from "@/lib/auction-status";
 import { nprCompact } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import { getPublicAuctions } from "@/lib/queries";
@@ -11,7 +12,7 @@ import { getPublicAuctions } from "@/lib/queries";
 export default async function HomePage() {
   const { lang, t } = await getT();
   const auctions = await getPublicAuctions();
-  const open = auctions.filter((a) => a.status === "open");
+  const open = auctions.filter((a) => displayStatus(a) === "open");
   const rest = auctions.slice(0, 6);
 
   // One map marker per district that has properties on offer. Districts with

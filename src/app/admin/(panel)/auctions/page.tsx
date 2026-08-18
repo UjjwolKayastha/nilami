@@ -6,6 +6,7 @@ import { getAdminScope } from "@/lib/admin/org";
 import { formatDateTime, nprCompact } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import type { Auction, AuctionStatus, Property } from "@/lib/types";
+import { formatViews, hydrateViewCount, VIEW_STATS_SELECT } from "@/lib/views";
 
 export const dynamic = "force-dynamic";
 
@@ -21,14 +22,19 @@ export default async function AdminAuctionsPage() {
   const { isPlatformAdmin, organizationId } = await getAdminScope();
   let query = supabase
     .from("auctions")
-    .select("*, property:properties!inner(title, slug, organization_id)")
+    .select(
+      `*, property:properties!inner(title, slug, organization_id, ${VIEW_STATS_SELECT})`
+    )
     .order("submission_deadline", { ascending: true });
   if (!isPlatformAdmin)
     query = query.eq("property.organization_id", organizationId);
   const { data } = await query;
   const auctions = (data ?? []) as (Auction & {
-    property: Pick<Property, "title" | "slug" | "organization_id">;
+    property: Pick<Property, "title" | "slug" | "organization_id" | "view_count">;
   })[];
+  // The counter belongs to the property, so every round of a re-auctioned
+  // listing shows the same total.
+  auctions.forEach((a) => hydrateViewCount(a.property));
 
   return (
     <div className="space-y-8">
@@ -50,13 +56,14 @@ export default async function AdminAuctionsPage() {
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-ink/8 bg-ivory shadow-card">
-        <table className="w-full min-w-[680px] text-sm">
+        <table className="w-full min-w-[740px] text-sm">
           <thead>
             <tr className="border-b border-ink/8 text-left text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft">
               <th className="px-6 py-4">Property / notice</th>
               <th className="px-4 py-4">Min. bid</th>
               <th className="px-4 py-4">Deadline</th>
               <th className="px-4 py-4">Status</th>
+              <th className="px-4 py-4 text-right">Views</th>
               <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -77,6 +84,12 @@ export default async function AdminAuctionsPage() {
                 </td>
                 <td className="px-4 py-3.5">
                   <StatusBadge status={a.status} />
+                </td>
+                <td
+                  className="px-4 py-3.5 text-right tabular-nums text-ink-soft"
+                  title="Views of this property's public listing"
+                >
+                  {formatViews(a.property?.view_count)}
                 </td>
                 <td className="px-6 py-3.5">
                   <div className="flex flex-wrap items-center justify-end gap-2">

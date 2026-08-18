@@ -119,10 +119,12 @@ export default async function AuctionDetailPage({
                 {p.ward ? `–${p.ward}` : ""}, {p.district}, {p.province}
               </p>
               {org && (
-                <p className="inline-flex items-center gap-2 rounded-full bg-evergreen-50 px-4 py-1.5 text-sm font-medium text-evergreen-800">
-                  <span className="size-1.5 rounded-full bg-brass-500" />
-                  {orgName(org, lang)}
-                </p>
+                <InstitutionCard
+                  org={org}
+                  lang={lang}
+                  t={t}
+                  enquirySubject={enquirySubject}
+                />
               )}
             </div>
 
@@ -224,7 +226,7 @@ export default async function AuctionDetailPage({
           </div>
 
           {/* Right column — sticky bid panel */}
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto">
             <div className="overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-lift">
               <div className="bg-evergreen-900 p-7 text-ivory">
                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ivory/60">
@@ -276,29 +278,17 @@ export default async function AuctionDetailPage({
                   </p>
                   <p className="mt-1.5">{t.detail.howToBidBody}</p>
                 </div>
-                {!org && (
-                  <a
-                    href={`mailto:${contactEmail}?subject=${encodeURIComponent(
-                      enquirySubject
-                    )}`}
-                    className="block rounded-full bg-evergreen-800 py-3.5 text-center text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
-                  >
-                    {t.detail.contact}
-                  </a>
-                )}
+                <a
+                  href={`mailto:${contactEmail}?subject=${encodeURIComponent(
+                    enquirySubject
+                  )}`}
+                  className="block rounded-full bg-evergreen-800 py-3.5 text-center text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+                >
+                  {t.detail.contact}
+                </a>
               </div>
             </div>
 
-            {org && (
-              <div className="mt-6">
-                <InstitutionCard
-                  org={org}
-                  lang={lang}
-                  t={t}
-                  enquirySubject={enquirySubject}
-                />
-              </div>
-            )}
           </aside>
         </div>
       </main>

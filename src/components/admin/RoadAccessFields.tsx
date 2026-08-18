@@ -36,7 +36,7 @@ export function RoadAccessFields({
         />
       </label>
       <label className="block space-y-1.5">
-        <span className={labelCls}>Road surface / note</span>
+        <span className={labelCls}>Road surface</span>
         <input
           name="road_access_note"
           value={description}

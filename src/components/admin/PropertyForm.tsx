@@ -123,7 +123,7 @@ export function PropertyForm({
 
       <section className="space-y-4">
         <h2 className="font-semibold text-evergreen-900">Location</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid items-end gap-4 sm:grid-cols-3">
           <LocationSelects
             province={p?.province}
             district={p?.district}

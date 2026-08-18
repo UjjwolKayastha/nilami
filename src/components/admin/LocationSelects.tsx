@@ -127,7 +127,7 @@ export function LocationSelects({
       <Select
         {...shared}
         name="municipality"
-        label="Municipality / rural municipality"
+        label="Local level"
         value={municipality}
         onChange={setMunicipality}
         options={opts(municipalitiesOf(province, district).map((m) => m.name))}

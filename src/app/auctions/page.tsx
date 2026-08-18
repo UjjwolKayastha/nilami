@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AuctionCard } from "@/components/AuctionCard";
+import { PageSizeSelect } from "@/components/PageSizeSelect";
+import { Pagination } from "@/components/Pagination";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { orgName } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
+import {
+  DEFAULT_PAGE_SIZE,
+  listingHref,
+  PAGE_SIZES,
+  parsePage,
+  parsePageSize,
+} from "@/lib/pagination";
 import { getDistricts, getOrganizations, getPublicAuctions } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Auctions" };
@@ -18,6 +27,8 @@ export default async function AuctionsPage({
     district?: string;
     org?: string;
     q?: string;
+    page?: string;
+    size?: string;
   }>;
 }) {
   const { lang, t } = await getT();
@@ -43,7 +54,27 @@ export default async function AuctionsPage({
     { v: "sold", l: t.common.statuses.sold },
   ];
 
-  const active = Object.entries(params).filter(([, v]) => v);
+  // Paging is applied here rather than in the query: getPublicAuctions filters
+  // type/district/org/q in JS after the fetch, so the true total is only known
+  // once that is done.
+  const total = auctions.length;
+  const size = parsePageSize(params.size);
+  const totalPages = Math.ceil(total / size);
+  const page = parsePage(params.page, totalPages);
+  const from = (page - 1) * size;
+  const pageItems = auctions.slice(from, from + size);
+
+  // Paging params must not make the "Clear" link appear.
+  const active = Object.entries(params).filter(
+    ([k, v]) => v && k !== "page" && k !== "size"
+  );
+  const showSizeSelect = total > PAGE_SIZES[0] || size !== DEFAULT_PAGE_SIZE;
+  // Clearing drops the filters and the page, but keeps the reader's page size.
+  const clearHref = listingHref(
+    "/auctions",
+    {},
+    { size: size === DEFAULT_PAGE_SIZE ? undefined : String(size) }
+  );
   const selectCls =
     "h-11 w-full rounded-xl border border-ink/12 bg-ivory px-3 text-sm outline-none focus:border-evergreen-600 sm:w-auto";
 
@@ -97,6 +128,10 @@ export default async function AuctionsPage({
               <option key={o.v} value={o.v}>{o.l}</option>
             ))}
           </select>
+          {/* Applying filters starts over at page 1, but keeps the page size. */}
+          {size !== DEFAULT_PAGE_SIZE && (
+            <input type="hidden" name="size" value={size} />
+          )}
           <button
             type="submit"
             className="h-11 w-full rounded-xl bg-evergreen-800 px-6 text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700 sm:w-auto"
@@ -105,7 +140,7 @@ export default async function AuctionsPage({
           </button>
           {active.length > 0 && (
             <Link
-              href="/auctions"
+              href={clearHref}
               className="text-sm font-medium text-ink-soft underline-offset-4 hover:underline"
             >
               {t.listing.clear}
@@ -122,11 +157,24 @@ export default async function AuctionsPage({
           </div>
         ) : (
           <>
-            <p className="mb-6 text-sm text-ink-soft">
-              {t.listing.count(auctions.length)}
-            </p>
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+              <p className="text-sm text-ink-soft">
+                {totalPages > 1
+                  ? t.listing.showing(from + 1, from + pageItems.length, total)
+                  : t.listing.count(total)}
+              </p>
+              {showSizeSelect && (
+                <PageSizeSelect
+                  basePath="/auctions"
+                  params={params}
+                  size={size}
+                  sizes={PAGE_SIZES}
+                  lang={lang}
+                />
+              )}
+            </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {auctions.map((a, i) => (
+              {pageItems.map((a, i) => (
                 <AuctionCard
                   key={a.id}
                   auction={a}
@@ -136,6 +184,13 @@ export default async function AuctionsPage({
                 />
               ))}
             </div>
+            <Pagination
+              basePath="/auctions"
+              params={params}
+              page={page}
+              totalPages={totalPages}
+              lang={lang}
+            />
           </>
         )}
       </main>

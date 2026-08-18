@@ -247,6 +247,13 @@ needed an outbound URL that did not exist, so `organizations.website` was added;
 while it is unset the primary button is a mailto enquiry prefilled with the
 notice number, so the card never has a dead primary action.
 
+The card sits under the listing title, replacing the bare institution pill,
+rather than in the sticky sidebar. Measured on production, that column renders
+1174px tall against 704-886px of usable height once pinned, so anything at its
+foot could never be scrolled to — the card was unreachable on desktop. Moving it
+into the page flow brings the sidebar to 688-788px, which fits, and a
+`max-h`/`overflow-y-auto` guard now keeps it reachable whatever it grows to.
+
 There is still no admin screen for editing an institution, so `logo_url` and
 `website` can only be set directly in the database. Worth adding.
 
@@ -316,6 +323,10 @@ tree, verified together before release:
 - Auction card fixes: location under the title, institution highlighted, and a
   shared status helper so a notice can no longer read "Open for bids" and
   "Deadline passed" at once.
+
+A later round added listing pagination with a page-size control, an image
+carousel on the auction cards, and a StatusBadge variant for use over a
+photograph, where the pale on-surface grounds washed out.
 
 Two follow-ups those left open: the seeded pins are locality-accurate but four
 sit in a different ward than the listing claims, and the durable fix for status

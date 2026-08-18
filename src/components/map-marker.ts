@@ -35,7 +35,7 @@ export function logoPin(width = 40): string {
   return `
     <svg width="${w}" height="${h}" viewBox="0 0 32 44" fill="none"
          xmlns="http://www.w3.org/2000/svg"
-         style="display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))">
+         style="display:block;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))">
       <path d="${PIN_BODY}" fill="${EVERGREEN}" stroke="${BRASS}" stroke-width="2"/>
       ${GAVEL}
     </svg>`;
@@ -48,18 +48,18 @@ export function logoPin(width = 40): string {
  */
 export function logoPinWithCount(width: number, count: number): string {
   const { height: h } = pinSize(width);
-  const bubble = Math.max(18, Math.round(width * 0.55));
+  const bubble = Math.max(15, Math.round(width * 0.5));
   return `
     <div style="position:relative;width:${width}px;height:${h}px">
       ${logoPin(width)}
       <div style="
-        position:absolute;top:-3px;right:${-Math.round(bubble * 0.35)}px;
-        min-width:${bubble}px;height:${bubble}px;padding:0 5px;
+        position:absolute;top:-2px;right:${-Math.round(bubble * 0.3)}px;
+        min-width:${bubble}px;height:${bubble}px;padding:0 4px;
         display:grid;place-items:center;box-sizing:border-box;
         border-radius:9999px;border:1.5px solid ${EVERGREEN};
         background:${BRASS};color:${EVERGREEN};
-        font:600 ${bubble > 22 ? 12 : 11}px/1 ui-sans-serif,system-ui,sans-serif;
-        box-shadow:0 1px 4px rgba(0,0,0,.35);
+        font:600 ${bubble > 20 ? 11 : 10}px/1 ui-sans-serif,system-ui,sans-serif;
+        box-shadow:0 1px 3px rgba(0,0,0,.4);
       ">${count}</div>
     </div>`;
 }

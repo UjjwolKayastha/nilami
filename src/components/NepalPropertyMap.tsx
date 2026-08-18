@@ -3,7 +3,7 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 
-import { logoPinWithCount, pinSize } from "./map-marker";
+import { logoPin, logoPinWithCount, pinSize } from "./map-marker";
 
 export type DistrictPoint = {
   district: string;
@@ -20,12 +20,21 @@ const NEPAL_BOUNDS: [[number, number], [number, number]] = [
   [30.5, 88.3],
 ];
 
-/** A logo pin whose size grows with how many properties the district holds. */
+/**
+ * A logo pin whose size grows with how many properties the district holds.
+ *
+ * Kept deliberately small: this map is a ~500px hero panel showing the whole
+ * country, and the Kathmandu valley districts sit close enough together that
+ * larger pins merge into one blob. A district holding a single property gets no
+ * counter — a lone pin already says "one", and stamping "1" on almost every
+ * marker was noise rather than information.
+ */
 function badge(count: number): { html: string; width: number; height: number } {
   const { width, height } = pinSize(
-    Math.min(54, 34 + Math.round(Math.log2(count + 1) * 6))
+    Math.min(36, 22 + Math.round(Math.log2(count + 1) * 5))
   );
-  return { html: logoPinWithCount(width, count), width, height };
+  const html = count > 1 ? logoPinWithCount(width, count) : logoPin(width);
+  return { html, width, height };
 }
 
 export function NepalPropertyMap({
@@ -71,6 +80,10 @@ export function NepalPropertyMap({
             popupAnchor: [0, -height],
           }),
           title: `${p.district} — ${p.label}`,
+          // The valley districts sit close enough to overlap at this zoom;
+          // Leaflet stacks markers by latitude, so hovering is the only way to
+          // pull one of them forward.
+          riseOnHover: true,
         })
           .addTo(map)
           .bindPopup(

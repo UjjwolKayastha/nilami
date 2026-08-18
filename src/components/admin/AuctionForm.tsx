@@ -105,8 +105,8 @@ export function AuctionForm({
         <Field label="Opening venue" className="sm:col-span-2">
           <input name="opening_venue" defaultValue={a?.opening_venue} className={inputCls} />
         </Field>
-        <Field label="Appraised value (NPR)">
-          <input name="appraised_value" type="number" required defaultValue={a?.appraised_value ?? ""} className={inputCls} />
+        <Field label="Appraised value (NPR) — optional">
+          <input name="appraised_value" type="number" defaultValue={a?.appraised_value || ""} className={inputCls} />
         </Field>
         <Field label="Minimum bid (NPR)">
           <input name="minimum_bid" type="number" required defaultValue={a?.minimum_bid ?? ""} className={inputCls} />

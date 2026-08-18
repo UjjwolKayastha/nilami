@@ -75,9 +75,6 @@ export default async function AdminPropertiesPage() {
                         <p className="truncate font-medium text-ink">
                           {p.title}
                         </p>
-                        <p className="truncate text-xs text-ink-soft">
-                          {p.loan_ref}
-                        </p>
                       </div>
                     </div>
                   </td>

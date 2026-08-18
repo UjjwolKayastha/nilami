@@ -1,6 +1,9 @@
 "use client";
 
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { LandAreaField } from "@/components/admin/LandAreaField";
+import { LocationSelects } from "@/components/admin/LocationSelects";
+import { RoadAccessFields } from "@/components/admin/RoadAccessFields";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { upsertProperty } from "@/lib/admin/actions";
 import type { Property } from "@/lib/types";
@@ -9,6 +12,17 @@ const inputCls =
   "h-11 w-full rounded-xl border border-ink/15 bg-white px-3.5 text-sm outline-none transition-colors focus:border-evergreen-600";
 const labelCls =
   "text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft";
+
+const FACINGS = [
+  "North",
+  "North-East",
+  "East",
+  "South-East",
+  "South",
+  "South-West",
+  "West",
+  "North-West",
+];
 
 function Field({
   label,
@@ -66,9 +80,6 @@ export function PropertyForm({
               <option value="commercial">Commercial</option>
             </select>
           </Field>
-          <Field label="Loan reference">
-            <input name="loan_ref" defaultValue={p?.loan_ref} className={inputCls} />
-          </Field>
           {lockedOrg ? (
             <div className="block space-y-1.5">
               <span className={labelCls}>Institution</span>
@@ -113,15 +124,13 @@ export function PropertyForm({
       <section className="space-y-4">
         <h2 className="font-semibold text-evergreen-900">Location</h2>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Province">
-            <input name="province" required defaultValue={p?.province} className={inputCls} />
-          </Field>
-          <Field label="District">
-            <input name="district" required defaultValue={p?.district} className={inputCls} />
-          </Field>
-          <Field label="Municipality">
-            <input name="municipality" required defaultValue={p?.municipality} className={inputCls} />
-          </Field>
+          <LocationSelects
+            province={p?.province}
+            district={p?.district}
+            municipality={p?.municipality}
+            inputCls={inputCls}
+            labelCls={labelCls}
+          />
           <Field label="Ward">
             <input name="ward" type="number" defaultValue={p?.ward ?? ""} className={inputCls} />
           </Field>
@@ -134,9 +143,11 @@ export function PropertyForm({
       <section className="space-y-4">
         <h2 className="font-semibold text-evergreen-900">Specifications</h2>
         <div className="grid gap-4 sm:grid-cols-4">
-          <Field label="Land area (aana)">
-            <input name="land_area_aana" type="number" step="0.01" defaultValue={p?.land_area_aana ?? ""} className={inputCls} />
-          </Field>
+          <LandAreaField
+            value={p?.land_area_aana}
+            inputCls={inputCls}
+            labelCls={labelCls}
+          />
           <Field label="Land area (m²)">
             <input name="land_area_sqm" type="number" step="0.01" defaultValue={p?.land_area_sqm ?? ""} className={inputCls} />
           </Field>
@@ -152,11 +163,23 @@ export function PropertyForm({
           <Field label="Bathrooms">
             <input name="bathrooms" type="number" defaultValue={p?.bathrooms ?? ""} className={inputCls} />
           </Field>
-          <Field label="Road access">
-            <input name="road_access" defaultValue={p?.road_access ?? ""} className={inputCls} />
-          </Field>
+          <RoadAccessFields
+            value={p?.road_access}
+            inputCls={inputCls}
+            labelCls={labelCls}
+          />
           <Field label="Facing">
-            <input name="facing" defaultValue={p?.facing ?? ""} className={inputCls} />
+            <select name="facing" defaultValue={p?.facing ?? ""} className={inputCls}>
+              <option value="">Not specified</option>
+              {FACINGS.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+              {p?.facing && !FACINGS.includes(p.facing) && (
+                <option value={p.facing}>{p.facing} — not in list</option>
+              )}
+            </select>
           </Field>
         </div>
       </section>

@@ -119,6 +119,92 @@ institution rather than left unassigned.
 **Not a full audit trail.** Start and stop are written to the runtime log only;
 there is no `view_as` audit table. Worth adding if proxy login sees real use.
 
+### 6. Province, district and municipality are now dropdowns
+
+New `src/lib/nepal/administrative-divisions.ts` carries all 7 provinces, 77
+districts and 753 local levels (6 metropolitan, 11 sub-metropolitan, 276
+municipalities, 460 rural municipalities) with both English and Nepali names,
+plus each local level's ward count.
+
+Source: [sagautam5/local-states-nepal](https://github.com/sagautam5/local-states-nepal)
+(MIT). Two corrections were applied while generating the file:
+
+- `काेशी प्रदेश` was encoded as ा + े rather than ो.
+- The source romanises बुढानिलकण्ठ as "Budhalikantha"; the local body's own site
+  (budhanilkanthamun.gov.np) uses **Budhanilkantha**, which is also what the
+  properties table already held.
+
+Names are stored exactly as displayed — municipalities keep their category
+suffix ("Kathmandu Metropolitan City"), provinces and districts stay bare —
+which matches 7 of the 9 values already in the database.
+
+`LocationSelects` cascades province → district → municipality, clearing the
+levels below whenever a parent changes. Any value already saved that is not in
+the dataset stays selectable, marked "— not in list", so editing an older
+property cannot silently blank its location.
+
+The file is 120 KB raw but 15 KB gzipped, and only loads on the two admin
+property routes.
+
+### 7. Loan reference removed
+
+Dropped from the property form, the admin list and the public detail page, and
+no longer written by `upsertProperty`. The column is left in place (it is
+`NOT NULL DEFAULT ''`), so inserts fall back to the default, updates leave any
+existing reference untouched, and nothing already recorded is lost.
+
+### 8. Land area accepts ropani-aana-paisa-daam
+
+`src/lib/nepal/land-area.ts` parses either a plain aana figure ("8.5") or
+`1-0-0-0` (ropani-aana-paisa-daam, 1 ropani = 16 aana, 1 aana = 4 paisa,
+1 paisa = 4 daam), storing the result as decimal aana in the existing column.
+The admin field shows what the entry resolves to as it is typed.
+
+Unit tested, including the round trip in both directions. The tests caught a
+bug on the way: `"-5"` was read as 5, because the minus sign sent it down the
+ropani branch and split into an empty ropani plus 5 aana. Every segment must
+now be a plain non-negative number.
+
+### 9. Road access in feet
+
+`road_access` holds one free-text string ("20 ft blacktopped", "Highway
+frontage"). Rather than migrate it, the form now edits it as two fields — width
+in feet and a description — which `src/lib/nepal/road-access.ts` splits and
+rejoins. Verified against all eight values currently in the table, including
+"20 Fit", which round-trips to "20 ft".
+
+### 10. Facing is a fixed list
+
+The eight compass points, with any unlisted stored value preserved the same way
+as the location dropdowns.
+
+### 11. Appraised value is optional
+
+`required` removed from the auction form, and the public detail page omits the
+row when no value was given. No schema change was needed: `upsertAuction`
+already coerced a blank entry to 0, which satisfies the column's `NOT NULL`.
+
+### 12. Nepal map on the landing page
+
+The hero's single featured property is replaced by an OpenStreetMap view of
+Nepal with one marker per district that has properties, labelled with the
+count; clicking a marker opens a popup that links through to that district's
+filtered auction list.
+
+Marker positions come from `src/lib/nepal/district-coordinates.ts` — the area
+centroid of each district's largest polygon, computed from
+[mesaugat/geoJSON-Nepal](https://github.com/mesaugat/geoJSON-Nepal). Thirteen
+district names are spelled differently between the two sources; each mapping
+was cross-checked against the province the boundary file assigns it to, so the
+two Nawalparasi and two Rukum successor districts are not transposed. All 77
+matched with no province mismatch.
+
+Adds one dependency, `leaflet` (with `@types/leaflet`), loaded only on the
+landing page. Verified in a real browser: 8 district markers with the right
+counts, tiles loading, no console errors, and the popup link resolving to
+`/auctions?district=…`. A first attempt gave the marker icon a zero size, which
+left it with no hit area — fixed by sizing and anchoring the badge properly.
+
 ### Also
 
 - `src/components/site/Header.tsx` now resolves the session and shows
@@ -155,18 +241,17 @@ dashboard.
 
 ## Still outstanding from the checklist
 
-| # | Item |
-| --- | --- |
-| 1 | Province / district / municipality should be dropdowns, not free text |
-| 2 | Loan reference should not be required (column is `NOT NULL`; always rendered publicly) |
-| 3 | Land area in aana should accept `1-0-0-0` (ropani–aana–paisa–daam) |
-| 4 | Road access needs a feet unit |
-| 5 | Facing should be a dropdown |
-| 6 | OpenStreetMap integration (needs lat/long columns) |
-| 7 | Video for property auctions |
-| 8 | Appraised value should not be required (`required` on the input, `NOT NULL` in the DB) |
+Both remaining items need columns that could not be added — the schema
+migration was refused by the local permission policy, not by the database:
 
-Items 1, 3, 4, 5, 6 and 7 all need schema changes, not just form changes.
+| Item | Needs |
+| --- | --- |
+| Pinpoint a property on OpenStreetMap | `properties.latitude`, `properties.longitude` |
+| Video on the property's auction | `properties.video_url` |
+
+The migration that was attempted also drops `NOT NULL` from
+`auctions.appraised_value`; that one is cosmetic, since item 11 already works
+without it.
 
 Already satisfied before this pass: institution contact details on the auction
 detail page, and the 10% bid-security auto-fill (computed server-side in

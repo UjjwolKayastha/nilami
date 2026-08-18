@@ -1,11 +1,10 @@
-import Image from "next/image";
 import Link from "next/link";
 import { AuctionCard } from "@/components/AuctionCard";
-import { Countdown } from "@/components/Countdown";
+import { NepalPropertyMap, type DistrictPoint } from "@/components/NepalPropertyMap";
+import { DISTRICT_COORDINATES } from "@/lib/nepal/district-coordinates";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
-import { nprCompact, typeLabel } from "@/lib/format";
-import { orgName } from "@/lib/i18n/dictionaries";
+import { nprCompact } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import { getPublicAuctions } from "@/lib/queries";
 
@@ -13,8 +12,24 @@ export default async function HomePage() {
   const { lang, t } = await getT();
   const auctions = await getPublicAuctions();
   const open = auctions.filter((a) => a.status === "open");
-  const featured = open[0];
-  const rest = auctions.filter((a) => a.id !== featured?.id).slice(0, 6);
+  const rest = auctions.slice(0, 6);
+
+  // One map marker per district that has properties on offer. Districts with
+  // no centroid on file are skipped rather than dropped on the equator.
+  const byDistrict = new Map<string, number>();
+  for (const a of auctions) {
+    const d = a.property?.district;
+    if (d) byDistrict.set(d, (byDistrict.get(d) ?? 0) + 1);
+  }
+  const mapPoints: DistrictPoint[] = [...byDistrict.entries()]
+    .filter(([d]) => DISTRICT_COORDINATES[d])
+    .map(([district, count]) => ({
+      district,
+      count,
+      lat: DISTRICT_COORDINATES[district][0],
+      lng: DISTRICT_COORDINATES[district][1],
+      label: t.home.mapCount(count),
+    }));
   const totalValue = open.reduce((s, a) => s + a.minimum_bid, 0);
   const nums = ["01", "02", "03", "04"];
 
@@ -77,53 +92,17 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Featured card */}
-            {featured && (
-              <Link
-                href={`/auctions/${featured.property.slug}`}
-                className="rise rise-2 group relative block overflow-hidden rounded-3xl border border-ivory/10 bg-ivory/5 shadow-lift backdrop-blur"
-              >
-                <div className="relative aspect-[4/3]">
-                  {featured.property.images?.[0] && (
-                    <Image
-                      src={featured.property.images[0].url}
-                      alt={featured.property.title}
-                      fill
-                      priority
-                      sizes="(max-width: 1024px) 100vw, 40vw"
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-evergreen-950/90 via-evergreen-950/20 to-transparent" />
-                  <span className="absolute left-4 top-4 rounded-full bg-brass-500 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-evergreen-950">
-                    {t.home.featured}
-                  </span>
-                  <div className="absolute inset-x-0 bottom-0 space-y-3 p-6">
-                    <p className="text-xs font-medium uppercase tracking-[0.16em] text-brass-300">
-                      {typeLabel(featured.property.type, lang)} ·{" "}
-                      {orgName(featured.property.organization, lang)}
-                    </p>
-                    <h2 className="font-display text-2xl font-semibold leading-snug">
-                      {featured.property.title}
-                    </h2>
-                    <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.14em] text-ivory/60">
-                          {t.common.minimumBid}
-                        </p>
-                        <p className="font-display text-3xl font-semibold text-brass-300">
-                          {nprCompact(featured.minimum_bid, lang)}{" "}
-                          <span className="text-sm font-normal text-ivory/60">
-                            {t.common.npr}
-                          </span>
-                        </p>
-                      </div>
-                      <Countdown deadline={featured.submission_deadline} lang={lang} />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            )}
+            {/* Where the properties are */}
+            <div className="rise rise-2">
+              <NepalPropertyMap
+                points={mapPoints}
+                emptyLabel={t.home.mapEmpty}
+                viewLabel={t.home.mapView}
+              />
+              <p className="mt-3 text-center text-xs text-ivory/50">
+                {t.home.mapCaption}
+              </p>
+            </div>
           </div>
         </section>
 

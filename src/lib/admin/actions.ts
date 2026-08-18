@@ -8,6 +8,8 @@ import {
   VIEW_AS_COOKIE,
   VIEW_AS_MAX_AGE,
 } from "@/lib/admin/view-as";
+import { parseLandArea } from "@/lib/nepal/land-area";
+import { joinRoadAccess } from "@/lib/nepal/road-access";
 import { createClient } from "@/lib/supabase/server";
 
 function slugify(s: string): string {
@@ -65,16 +67,21 @@ export async function upsertProperty(formData: FormData) {
     municipality: (formData.get("municipality") as string).trim(),
     ward: num(formData.get("ward")),
     address: ((formData.get("address") as string) ?? "").trim(),
-    land_area_aana: num(formData.get("land_area_aana")),
+    land_area_aana: parseLandArea(
+      (formData.get("land_area_aana") as string) ?? ""
+    ),
     land_area_sqm: num(formData.get("land_area_sqm")),
     building_floors: num(formData.get("building_floors")),
     built_year: num(formData.get("built_year")),
     bedrooms: num(formData.get("bedrooms")),
     bathrooms: num(formData.get("bathrooms")),
-    road_access: ((formData.get("road_access") as string) ?? "").trim() || null,
+    road_access:
+      joinRoadAccess(
+        (formData.get("road_access_ft") as string) ?? "",
+        (formData.get("road_access_note") as string) ?? ""
+      ) || null,
     facing: ((formData.get("facing") as string) ?? "").trim() || null,
     description: ((formData.get("description") as string) ?? "").trim(),
-    loan_ref: ((formData.get("loan_ref") as string) ?? "").trim(),
     is_published: formData.get("is_published") === "on",
   };
 

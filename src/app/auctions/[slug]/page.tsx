@@ -62,7 +62,6 @@ export default async function AuctionDetailPage({
     ...(p.bathrooms ? [[f.bathrooms, String(p.bathrooms)] as [string, string]] : []),
     ...(p.road_access ? [[f.roadAccess, p.road_access] as [string, string]] : []),
     ...(p.facing ? [[f.facing, p.facing] as [string, string]] : []),
-    [f.loanRef, p.loan_ref || "—"],
   ];
 
   const noticeRows: [string, string][] = [
@@ -190,7 +189,12 @@ export default async function AuctionDetailPage({
                   </div>
                 )}
                 <dl className="divide-y divide-ink/8">
-                  <Fact label={t.detail.appraised} value={npr(auction.appraised_value, lang)} />
+                  {auction.appraised_value ? (
+                    <Fact
+                      label={t.detail.appraised}
+                      value={npr(auction.appraised_value, lang)}
+                    />
+                  ) : null}
                   <Fact
                     label={t.detail.security(String(auction.bid_security_pct ?? 10))}
                     value={npr(auction.bid_security_amount, lang)}

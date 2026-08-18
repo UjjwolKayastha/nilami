@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { logoPin, pinSize } from "../map-marker";
 
-const PIN = pinSize(40);
+const PIN = pinSize(30);
 
 /**
  * Click (or drag the pin) to set a property's coordinates. Recentres when the

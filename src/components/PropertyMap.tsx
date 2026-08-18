@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { logoPin, pinSize } from "./map-marker";
 
-const PIN = pinSize(40);
+const PIN = pinSize(30);
 
 /** Read-only OpenStreetMap view of a single property's location. */
 export function PropertyMap({

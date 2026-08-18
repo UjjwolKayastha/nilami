@@ -100,8 +100,8 @@ export default async function AuctionDetailPage({
         </nav>
 
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr]">
-          {/* Left column */}
-          <div className="space-y-10">
+          {/* Header and gallery */}
+          <div className="space-y-10 lg:col-start-1 lg:row-start-1">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
                 <StatusBadge status={status} lang={lang} />
@@ -129,7 +129,78 @@ export default async function AuctionDetailPage({
             </div>
 
             <Gallery images={p.images ?? []} title={p.title} />
+          </div>
 
+          {/* Bid panel. On a phone it follows the gallery, so the price, the
+              countdown and the contact button are reachable without scrolling
+              past the whole listing; on desktop it is the sticky right column. */}
+          <aside className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto">
+            <div className="overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-lift">
+              <div className="bg-evergreen-900 p-7 text-ivory">
+                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ivory/60">
+                  {t.common.minimumBid}
+                </p>
+                <p className="font-display mt-1 text-4xl font-semibold text-brass-300">
+                  {nprCompact(auction.minimum_bid, lang)}
+                  <span className="ml-2 text-sm font-normal text-ivory/60">
+                    {t.common.npr}
+                  </span>
+                </p>
+                <p className="mt-1 text-sm text-ivory/60">
+                  {npr(auction.minimum_bid, lang)}
+                </p>
+                {auction.status === "sold" && auction.winning_amount ? (
+                  <p className="mt-4 rounded-xl bg-brass-500/15 p-3 text-sm text-brass-300">
+                    {t.detail.soldAt}: {npr(auction.winning_amount, lang)}.{" "}
+                    {auction.result_note}
+                  </p>
+                ) : null}
+              </div>
+              <div className="space-y-6 p-7">
+                {status === "open" && (
+                  <div>
+                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
+                      {t.detail.closesIn}
+                    </p>
+                    <Countdown deadline={auction.submission_deadline} large lang={lang} />
+                  </div>
+                )}
+                <dl className="divide-y divide-ink/8">
+                  {auction.appraised_value ? (
+                    <Fact
+                      label={t.detail.appraised}
+                      value={npr(auction.appraised_value, lang)}
+                    />
+                  ) : null}
+                  <Fact
+                    label={t.detail.security(String(auction.bid_security_pct ?? 10))}
+                    value={npr(auction.bid_security_amount, lang)}
+                  />
+                  {noticeRows.map(([l, v]) => (
+                    <Fact key={l} label={l} value={v} />
+                  ))}
+                </dl>
+                <div className="rounded-2xl bg-cream p-5 text-sm leading-relaxed text-ink-soft">
+                  <p className="font-semibold text-evergreen-900">
+                    {t.detail.howToBid}
+                  </p>
+                  <p className="mt-1.5">{t.detail.howToBidBody}</p>
+                </div>
+                <a
+                  href={`mailto:${contactEmail}?subject=${encodeURIComponent(
+                    enquirySubject
+                  )}`}
+                  className="block rounded-full bg-evergreen-800 py-3.5 text-center text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+                >
+                  {t.detail.contact}
+                </a>
+              </div>
+            </div>
+
+          </aside>
+
+          {/* Description, video, map, facts, terms */}
+          <div className="space-y-10 lg:col-start-1 lg:row-start-2">
             <section>
               <h2 className="font-display text-2xl font-semibold text-evergreen-900">
                 {t.detail.about}
@@ -224,72 +295,6 @@ export default async function AuctionDetailPage({
               lang={lang}
             />
           </div>
-
-          {/* Right column — sticky bid panel */}
-          <aside className="lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto">
-            <div className="overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-lift">
-              <div className="bg-evergreen-900 p-7 text-ivory">
-                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ivory/60">
-                  {t.common.minimumBid}
-                </p>
-                <p className="font-display mt-1 text-4xl font-semibold text-brass-300">
-                  {nprCompact(auction.minimum_bid, lang)}
-                  <span className="ml-2 text-sm font-normal text-ivory/60">
-                    {t.common.npr}
-                  </span>
-                </p>
-                <p className="mt-1 text-sm text-ivory/60">
-                  {npr(auction.minimum_bid, lang)}
-                </p>
-                {auction.status === "sold" && auction.winning_amount ? (
-                  <p className="mt-4 rounded-xl bg-brass-500/15 p-3 text-sm text-brass-300">
-                    {t.detail.soldAt}: {npr(auction.winning_amount, lang)}.{" "}
-                    {auction.result_note}
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-6 p-7">
-                {status === "open" && (
-                  <div>
-                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft">
-                      {t.detail.closesIn}
-                    </p>
-                    <Countdown deadline={auction.submission_deadline} large lang={lang} />
-                  </div>
-                )}
-                <dl className="divide-y divide-ink/8">
-                  {auction.appraised_value ? (
-                    <Fact
-                      label={t.detail.appraised}
-                      value={npr(auction.appraised_value, lang)}
-                    />
-                  ) : null}
-                  <Fact
-                    label={t.detail.security(String(auction.bid_security_pct ?? 10))}
-                    value={npr(auction.bid_security_amount, lang)}
-                  />
-                  {noticeRows.map(([l, v]) => (
-                    <Fact key={l} label={l} value={v} />
-                  ))}
-                </dl>
-                <div className="rounded-2xl bg-cream p-5 text-sm leading-relaxed text-ink-soft">
-                  <p className="font-semibold text-evergreen-900">
-                    {t.detail.howToBid}
-                  </p>
-                  <p className="mt-1.5">{t.detail.howToBidBody}</p>
-                </div>
-                <a
-                  href={`mailto:${contactEmail}?subject=${encodeURIComponent(
-                    enquirySubject
-                  )}`}
-                  className="block rounded-full bg-evergreen-800 py-3.5 text-center text-sm font-semibold text-ivory transition-colors hover:bg-evergreen-700"
-                >
-                  {t.detail.contact}
-                </a>
-              </div>
-            </div>
-
-          </aside>
         </div>
       </main>
       <Footer />

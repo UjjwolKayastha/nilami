@@ -68,6 +68,7 @@ export function AuctionCard({
       <CardCarousel
         images={property.images ?? []}
         title={property.title}
+        href={`/auctions/${property.slug}`}
         lang={lang}
       >
         <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">

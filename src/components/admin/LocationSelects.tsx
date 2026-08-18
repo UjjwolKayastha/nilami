@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { MapPicker } from "@/components/admin/MapPicker";
 import {
   districtsOf,
   municipalitiesOf,
   PROVINCES,
 } from "@/lib/nepal/administrative-divisions";
+import { DISTRICT_COORDINATES } from "@/lib/nepal/district-coordinates";
+
+/** Roughly the middle of Nepal, used until a district is chosen. */
+const NEPAL_CENTRE: [number, number] = [28.3949, 84.124];
 
 type Option = { value: string; label: string };
 
@@ -65,18 +70,29 @@ export function LocationSelects({
   province: initialProvince = "",
   district: initialDistrict = "",
   municipality: initialMunicipality = "",
+  latitude = null,
+  longitude = null,
   inputCls,
   labelCls,
 }: {
   province?: string;
   district?: string;
   municipality?: string;
+  latitude?: number | null;
+  longitude?: number | null;
   inputCls: string;
   labelCls: string;
 }) {
   const [province, setProvince] = useState(initialProvince);
   const [district, setDistrict] = useState(initialDistrict);
   const [municipality, setMunicipality] = useState(initialMunicipality);
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(
+    latitude != null && longitude != null
+      ? { lat: latitude, lng: longitude }
+      : null
+  );
+
+  const centre = DISTRICT_COORDINATES[district] ?? NEPAL_CENTRE;
 
   const opts = (names: string[]) => names.map((n) => ({ value: n, label: n }));
   const shared = { inputCls, labelCls };
@@ -117,6 +133,36 @@ export function LocationSelects({
         options={opts(municipalitiesOf(province, district).map((m) => m.name))}
         placeholder={district ? "Select local level…" : "Select a district first"}
       />
+
+      <div className="space-y-1.5 sm:col-span-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className={labelCls}>Location on map</span>
+          <span className="text-[11px] text-ink-soft">
+            {pin ? (
+              <>
+                {pin.lat.toFixed(6)}, {pin.lng.toFixed(6)}{" "}
+                <button
+                  type="button"
+                  onClick={() => setPin(null)}
+                  className="ml-1 font-medium text-danger hover:underline"
+                >
+                  clear
+                </button>
+              </>
+            ) : (
+              "Click the map to drop a pin (optional)"
+            )}
+          </span>
+        </div>
+        <MapPicker
+          lat={pin?.lat ?? null}
+          lng={pin?.lng ?? null}
+          centre={centre}
+          onPick={(lat, lng) => setPin({ lat, lng })}
+        />
+        <input type="hidden" name="latitude" value={pin?.lat ?? ""} />
+        <input type="hidden" name="longitude" value={pin?.lng ?? ""} />
+      </div>
     </>
   );
 }

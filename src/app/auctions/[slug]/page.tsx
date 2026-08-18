@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Countdown } from "@/components/Countdown";
 import { Gallery } from "@/components/Gallery";
+import { PropertyMap } from "@/components/PropertyMap";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
@@ -17,6 +18,7 @@ import {
 import { orgName } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
 import { getAuctionBySlug } from "@/lib/queries";
+import { videoEmbed } from "@/lib/video";
 
 export async function generateMetadata({
   params,
@@ -74,6 +76,8 @@ export default async function AuctionDetailPage({
   ];
 
   const contactEmail = org?.contact_email || "recovery@nilami.app";
+  const video = videoEmbed(p.video_url);
+  const hasPin = p.latitude != null && p.longitude != null;
 
   return (
     <>
@@ -124,6 +128,55 @@ export default async function AuctionDetailPage({
                 {p.description}
               </p>
             </section>
+
+            {video && (
+              <section>
+                <h2 className="font-display text-2xl font-semibold text-evergreen-900">
+                  {t.detail.video}
+                </h2>
+                <div className="mt-4 overflow-hidden rounded-2xl border border-ink/8 bg-ink/5">
+                  {video.kind === "iframe" ? (
+                    <iframe
+                      src={video.src}
+                      title={p.title}
+                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="aspect-video w-full"
+                    />
+                  ) : (
+                    <video
+                      src={video.src}
+                      controls
+                      preload="metadata"
+                      className="aspect-video w-full"
+                    />
+                  )}
+                </div>
+              </section>
+            )}
+
+            {hasPin && (
+              <section>
+                <h2 className="font-display text-2xl font-semibold text-evergreen-900">
+                  {t.detail.location}
+                </h2>
+                <div className="mt-4">
+                  <PropertyMap
+                    lat={p.latitude as number}
+                    lng={p.longitude as number}
+                    title={p.title}
+                  />
+                </div>
+                <a
+                  href={`https://www.openstreetmap.org/?mlat=${p.latitude}&mlon=${p.longitude}#map=16/${p.latitude}/${p.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block text-sm font-medium text-evergreen-800 hover:underline"
+                >
+                  {t.detail.openInOsm}
+                </a>
+              </section>
+            )}
 
             <section className="rounded-3xl border border-ink/8 bg-white p-7 shadow-card">
               <h2 className="font-display text-2xl font-semibold text-evergreen-900">

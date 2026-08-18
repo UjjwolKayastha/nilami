@@ -46,6 +46,9 @@ export interface Property {
   bathrooms: number | null;
   road_access: string | null;
   facing: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  video_url: string | null;
   description: string;
   loan_ref: string;
   organization_id: string;

@@ -205,6 +205,35 @@ counts, tiles loading, no console errors, and the popup link resolving to
 `/auctions?district=…`. A first attempt gave the marker icon a zero size, which
 left it with no hit area — fixed by sizing and anchoring the badge properly.
 
+### 13. Pinpoint a property on OpenStreetMap
+
+The migration refused earlier went through on a retry, adding `latitude`,
+`longitude` and `video_url` to `properties`.
+
+The property form now carries an OpenStreetMap picker under the location
+fields: click the map to drop a pin, drag it to adjust, or clear it. It centres
+on the chosen district's centroid until a pin exists, so it never opens
+mid-ocean, and follows the district selection while still unset. Coordinates
+ride along in hidden `latitude` / `longitude` inputs.
+
+The public detail page shows a read-only map with the pin whenever a property
+has one, plus a link out to the same spot on openstreetmap.org. Properties
+without a pin render exactly as before.
+
+Both components were driven in a real browser: the viewer renders its marker,
+and clicking the picker drops a pin and reports the coordinates back. Linting
+caught a ref being mutated during render, which concurrent rendering disallows;
+it is assigned in an effect instead.
+
+### 14. Property video
+
+A video URL field on the property form, rendered on the public detail page.
+`src/lib/video.ts` resolves YouTube (watch, youtu.be, shorts, embed) and Vimeo
+links to their embed players and plays direct `.mp4`/`.webm`/`.ogg`/`.mov`
+links inline. Anything else resolves to null and renders nothing, so an
+arbitrary URL cannot be dropped into an iframe — `javascript:` URLs and unknown
+hosts are rejected. Unit tested across all of those cases.
+
 ### Also
 
 - `src/components/site/Header.tsx` now resolves the session and shows
@@ -241,17 +270,7 @@ dashboard.
 
 ## Still outstanding from the checklist
 
-Both remaining items need columns that could not be added — the schema
-migration was refused by the local permission policy, not by the database:
-
-| Item | Needs |
-| --- | --- |
-| Pinpoint a property on OpenStreetMap | `properties.latitude`, `properties.longitude` |
-| Video on the property's auction | `properties.video_url` |
-
-The migration that was attempted also drops `NOT NULL` from
-`auctions.appraised_value`; that one is cosmetic, since item 11 already works
-without it.
+Nothing — every item on the note is implemented.
 
 Already satisfied before this pass: institution contact details on the auction
 detail page, and the 10% bid-security auto-fill (computed server-side in

@@ -105,6 +105,9 @@ const en = {
     breadcrumb: "Auctions",
     notice: "Notice",
     about: "About this property",
+    video: "Video walkthrough",
+    location: "Location",
+    openInOsm: "Open in OpenStreetMap →",
     details: "Property details",
     facts: {
       type: "Property type",
@@ -316,6 +319,9 @@ const ne: typeof en = {
     breadcrumb: "निलामीहरू",
     notice: "सूचना",
     about: "यस सम्पत्तिबारे",
+    video: "भिडियो अवलोकन",
+    location: "स्थान",
+    openInOsm: "OpenStreetMap मा हेर्नुहोस् →",
     details: "सम्पत्ति विवरण",
     facts: {
       type: "सम्पत्तिको प्रकार",

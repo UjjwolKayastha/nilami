@@ -128,6 +128,8 @@ export function PropertyForm({
             province={p?.province}
             district={p?.district}
             municipality={p?.municipality}
+            latitude={p?.latitude}
+            longitude={p?.longitude}
             inputCls={inputCls}
             labelCls={labelCls}
           />
@@ -192,6 +194,15 @@ export function PropertyForm({
             rows={5}
             defaultValue={p?.description}
             className="w-full rounded-xl border border-ink/15 bg-white p-3.5 text-sm outline-none transition-colors focus:border-evergreen-600"
+          />
+        </Field>
+        <Field label="Video (YouTube, Vimeo or a direct .mp4 link)">
+          <input
+            name="video_url"
+            type="url"
+            defaultValue={p?.video_url ?? ""}
+            placeholder="https://www.youtube.com/watch?v=…"
+            className={inputCls}
           />
         </Field>
         <div className="space-y-1.5">

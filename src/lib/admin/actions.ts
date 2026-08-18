@@ -82,6 +82,9 @@ export async function upsertProperty(formData: FormData) {
       ) || null,
     facing: ((formData.get("facing") as string) ?? "").trim() || null,
     description: ((formData.get("description") as string) ?? "").trim(),
+    latitude: num(formData.get("latitude")),
+    longitude: num(formData.get("longitude")),
+    video_url: ((formData.get("video_url") as string) ?? "").trim() || null,
     is_published: formData.get("is_published") === "on",
   };
 

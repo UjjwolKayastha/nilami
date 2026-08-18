@@ -1,7 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  getRealViewer,
+  VIEW_AS_COOKIE,
+  VIEW_AS_MAX_AGE,
+} from "@/lib/admin/view-as";
 import { createClient } from "@/lib/supabase/server";
 
 function slugify(s: string): string {
@@ -221,4 +227,63 @@ export async function rejectStaff(formData: FormData) {
   });
   if (error) throw new Error(error.message);
   revalidatePath("/admin/staff");
+}
+
+/**
+ * Proxy login: render the admin panel as another staff member sees it.
+ *
+ * Only a real platform admin may start one, and only into an approved
+ * account. This does not change who is authenticated — the admin stays
+ * signed in as themselves and writes still run with their own rights — it
+ * changes which institution the panel is scoped to. See getAdminScope().
+ */
+export async function startViewAs(formData: FormData) {
+  const viewer = await getRealViewer();
+  if (!viewer?.isPlatformAdmin)
+    throw new Error("Only the platform administrator can use proxy login.");
+
+  const targetId = (formData.get("id") as string) || "";
+  if (targetId === viewer.userId)
+    throw new Error("You are already signed in as that account.");
+
+  const supabase = await createClient();
+  const { data: target } = await supabase
+    .from("profiles")
+    .select("id, email, approved")
+    .eq("id", targetId)
+    .single();
+  if (!target?.approved)
+    throw new Error("That staff account is not approved, so it cannot be proxied into.");
+
+  const store = await cookies();
+  store.set(VIEW_AS_COOKIE, target.id as string, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: VIEW_AS_MAX_AGE,
+  });
+  console.info(
+    `[view-as] ${viewer.userId} started proxying into ${target.id} (${target.email})`
+  );
+
+  revalidatePath("/admin", "layout");
+  redirect("/admin");
+}
+
+/** End a proxy session. Safe for anyone to call — it only clears their own cookie. */
+export async function stopViewAs() {
+  const store = await cookies();
+  const wasViewing = store.get(VIEW_AS_COOKIE)?.value;
+  store.delete(VIEW_AS_COOKIE);
+
+  if (wasViewing) {
+    const viewer = await getRealViewer();
+    console.info(
+      `[view-as] ${viewer?.userId ?? "unknown"} stopped proxying into ${wasViewing}`
+    );
+  }
+
+  revalidatePath("/admin", "layout");
+  redirect("/admin/staff");
 }

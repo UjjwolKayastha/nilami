@@ -1,3 +1,8 @@
+import {
+  getRealViewer,
+  getViewAsTarget,
+  type ViewAsTarget,
+} from "@/lib/admin/view-as";
 import { createClient } from "@/lib/supabase/server";
 
 export async function getAdminOrgContext(): Promise<{
@@ -5,20 +10,25 @@ export async function getAdminOrgContext(): Promise<{
   lockedOrg: { id: string; name: string } | null;
 }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { organizations: [], lockedOrg: null };
-  const [{ data: orgs }, { data: profile }] = await Promise.all([
-    supabase.from("organizations").select("id, name").order("name"),
-    supabase
-      .from("profiles")
-      .select("organization_id, organization:organizations(id, name)")
-      .eq("id", user.id)
-      .single(),
-  ]);
-  const locked = (profile?.organization as unknown as { id: string; name: string } | null) ?? null;
-  return { organizations: orgs ?? [], lockedOrg: locked };
+  const viewer = await getRealViewer();
+  if (!viewer) return { organizations: [], lockedOrg: null };
+
+  // While proxying into a staff member, the form locks to their institution.
+  const target = await getViewAsTarget();
+  const effectiveOrgId = target ? target.organizationId : viewer.organizationId;
+
+  const { data: orgs } = await supabase
+    .from("organizations")
+    .select("id, name")
+    .order("name");
+  const organizations = orgs ?? [];
+
+  return {
+    organizations,
+    lockedOrg: effectiveOrgId
+      ? organizations.find((o) => o.id === effectiveOrgId) ?? null
+      : null,
+  };
 }
 
 /**
@@ -28,9 +38,10 @@ export async function getAdminOrgContext(): Promise<{
 const NO_ORG = "00000000-0000-0000-0000-000000000000";
 
 /**
- * Row visibility for the signed-in staff member. Platform admins
+ * Row visibility for the current admin view. Platform admins
  * (`profiles.organization_id IS NULL`) see every institution; institution
- * staff are limited to their own.
+ * staff are limited to their own. A platform admin proxying into someone
+ * takes on that person's scope for as long as the proxy session lasts.
  *
  * This has to be applied in the query itself. The RLS SELECT policies on
  * properties, auctions and property_images stay deliberately open so the
@@ -41,24 +52,25 @@ export async function getAdminScope(): Promise<{
   isPlatformAdmin: boolean;
   /** The organisation to filter by; ignore it when isPlatformAdmin. */
   organizationId: string;
+  /** Set when a platform admin is proxying into another staff member. */
+  viewingAs: ViewAsTarget | null;
 }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { isPlatformAdmin: false, organizationId: NO_ORG };
+  const viewer = await getRealViewer();
+  if (!viewer)
+    return { isPlatformAdmin: false, organizationId: NO_ORG, viewingAs: null };
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
+  const target = await getViewAsTarget();
+  if (target) {
+    return {
+      isPlatformAdmin: target.organizationId === null,
+      organizationId: target.organizationId ?? NO_ORG,
+      viewingAs: target,
+    };
+  }
 
-  if (!profile) return { isPlatformAdmin: false, organizationId: NO_ORG };
-  if (profile.organization_id === null)
-    return { isPlatformAdmin: true, organizationId: NO_ORG };
   return {
-    isPlatformAdmin: false,
-    organizationId: profile.organization_id as string,
+    isPlatformAdmin: viewer.isPlatformAdmin,
+    organizationId: viewer.organizationId ?? NO_ORG,
+    viewingAs: null,
   };
 }

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { signOut } from "@/lib/admin/actions";
+import { signOut, stopViewAs } from "@/lib/admin/actions";
+import { getViewAsTarget } from "@/lib/admin/view-as";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminLayout({
@@ -51,10 +52,16 @@ export default async function AdminLayout({
     );
   }
 
-  const isPlatformAdmin = profile.organization_id === null;
-  const orgLabel =
-    (profile.organization as unknown as { name: string } | null)?.name ??
-    "Platform Admin";
+  // A platform admin proxying into someone sees the panel as that person:
+  // their institution, their nav, their scope. The real session is unchanged.
+  const viewAs = await getViewAsTarget();
+  const isPlatformAdmin = viewAs
+    ? viewAs.organizationId === null
+    : profile.organization_id === null;
+  const orgLabel = viewAs
+    ? viewAs.organizationName
+    : (profile.organization as unknown as { name: string } | null)?.name ??
+      "Platform Admin";
 
   const nav = [
     { href: "/admin", label: "Overview" },
@@ -66,6 +73,28 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-dvh bg-cream">
+      {viewAs && (
+        <div className="sticky top-0 z-50 border-b border-brass-500/40 bg-brass-100">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <p className="text-sm text-brass-600">
+              <span aria-hidden>&#9888;</span>{" "}
+              <span className="font-semibold">Proxy login</span> — viewing the
+              panel as{" "}
+              <span className="font-semibold">{viewAs.fullName}</span> (
+              {viewAs.organizationName}). Changes you save are still recorded
+              under your own account.
+            </p>
+            <form action={stopViewAs} className="shrink-0">
+              <SubmitButton
+                pendingLabel="Exiting…"
+                className="rounded-full bg-brass-600 px-4 py-1.5 text-xs font-semibold text-ivory transition-colors hover:bg-brass-500"
+              >
+                Exit proxy login
+              </SubmitButton>
+            </form>
+          </div>
+        </div>
+      )}
       <header className="sticky top-0 z-40 border-b border-ink/8 bg-ivory/90 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 sm:px-5">
           <div className="flex min-w-0 items-center gap-3 sm:gap-6">

@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/admin/SubmitButton";
-import { approveStaff, rejectStaff } from "@/lib/admin/actions";
+import { approveStaff, rejectStaff, startViewAs } from "@/lib/admin/actions";
+import { getAdminScope } from "@/lib/admin/org";
+import { getRealViewer } from "@/lib/admin/view-as";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -14,16 +16,11 @@ const roleLabels: Record<string, string> = {
 
 export default async function AdminStaffPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/admin/login");
-  const { data: me } = await supabase
-    .from("profiles")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-  if (me?.organization_id !== null) redirect("/admin");
+  // Uses the effective scope, so a proxy session hides this page the same way
+  // it is hidden from the staff member being proxied into.
+  const { isPlatformAdmin } = await getAdminScope();
+  if (!isPlatformAdmin) redirect("/admin");
+  const viewer = await getRealViewer();
 
   const { data } = await supabase
     .from("profiles")
@@ -96,28 +93,45 @@ export default async function AdminStaffPage() {
                   </span>
                 </td>
                 <td className="px-6 py-3.5">
-                  {!p.approved && (
-                    <div className="flex items-center justify-end gap-2">
-                      <form action={approveStaff}>
+                  <div className="flex items-center justify-end gap-2">
+                    {!p.approved ? (
+                      <>
+                        <form action={approveStaff}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <SubmitButton
+                            pendingLabel="Approving…"
+                            className="rounded-full bg-evergreen-800 px-4 py-1.5 text-xs font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+                          >
+                            Approve
+                          </SubmitButton>
+                        </form>
+                        <form action={rejectStaff}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <SubmitButton
+                            pendingLabel="Rejecting…"
+                            className="rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger"
+                          >
+                            Reject
+                          </SubmitButton>
+                        </form>
+                      </>
+                    ) : p.id === viewer?.userId ? (
+                      <span className="text-xs font-medium text-ink-soft">
+                        You
+                      </span>
+                    ) : (
+                      <form action={startViewAs}>
                         <input type="hidden" name="id" value={p.id} />
                         <SubmitButton
-                          pendingLabel="Approving…"
-                          className="rounded-full bg-evergreen-800 px-4 py-1.5 text-xs font-semibold text-ivory transition-colors hover:bg-evergreen-700"
+                          pendingLabel="Switching…"
+                          title={`View the panel as ${p.full_name || p.email}`}
+                          className="rounded-full border border-evergreen-800/25 px-4 py-1.5 text-xs font-medium text-evergreen-800 transition-colors hover:bg-evergreen-800 hover:text-ivory"
                         >
-                          Approve
+                          View as
                         </SubmitButton>
                       </form>
-                      <form action={rejectStaff}>
-                        <input type="hidden" name="id" value={p.id} />
-                        <SubmitButton
-                          pendingLabel="Rejecting…"
-                          className="rounded-full border border-ink/15 px-4 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:border-danger hover:text-danger"
-                        >
-                          Reject
-                        </SubmitButton>
-                      </form>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

@@ -78,6 +78,47 @@ fail closed:
 | `actions.ts` → `upsertProperty` | throws "You must be signed in to save a property." |
 | `org.ts` → `getAdminOrgContext` | returns no institutions |
 
+### 5. Proxy login (view-as) from the admin panel
+
+A platform admin can render the panel exactly as another staff member sees it,
+for support and verification. **No session swap** — the admin stays
+authenticated as themselves, so no service-role key is introduced. A cookie
+records the target and `getAdminScope()` returns that person's institution, so
+every admin query, the nav, the org badge and the dashboard charts follow.
+
+New `src/lib/admin/view-as.ts`:
+
+- `getRealViewer()` — the account actually signed in, **ignoring** the cookie.
+  This is the security boundary.
+- `getViewAsTarget()` — resolves the target, returning `null` for anyone who is
+  not a real platform admin and for targets that are not approved.
+
+Both are wrapped in React `cache()` for per-request memoisation, following the
+data-access-layer pattern in Next's own `authentication.md`.
+
+`startViewAs` / `stopViewAs` in `actions.ts` refuse non-platform-admins and
+unapproved targets, set an `httpOnly` / `sameSite=lax` / `secure` cookie with a
+one-hour max-age, and log both start and stop to the runtime log.
+
+UI: a **View as** button on each approved row of `/admin/staff` (your own row
+reads "You"), and a banner pinned above the header while proxying — naming the
+staff member and their institution, warning that saved changes are still
+recorded under the admin's own account, and offering **Exit proxy login**.
+
+**Why a forged cookie is harmless.** The cookie is only honoured when the real
+profile is a platform admin. For institution staff it is ignored outright; for a
+platform admin it can only *narrow* what they already see. Setting it by hand can
+never widen access. While proxying, `/admin/staff` correctly disappears, because
+the effective scope is no longer platform admin — the banner is the way back.
+
+**Writes during a proxy session** still execute with the admin's own rights. One
+useful consequence: because `getAdminOrgContext()` now locks to the effective
+institution, a property created while proxying is filed under the target's
+institution rather than left unassigned.
+
+**Not a full audit trail.** Start and stop are written to the runtime log only;
+there is no `view_as` audit table. Worth adding if proxy login sees real use.
+
 ### Also
 
 - `src/components/site/Header.tsx` now resolves the session and shows
@@ -97,8 +138,13 @@ fail closed:
 - The show/hide password toggle was driven in a real browser on both forms: the
   field flips to plain text, the typed value survives, the label swaps, and the
   form does not submit.
-- **Not yet verified in a browser:** the "Dashboard" header label and the button
-  spinners, both of which sit behind staff auth.
+- Proxy login, negative path: with a forged `nilami_view_as` cookie and no
+  session, every admin route still redirects to login, the public site is
+  unaffected, and no server errors are logged.
+- **Not yet verified in a browser:** the "Dashboard" header label, the button
+  spinners, and the proxy-login happy path (banner, narrowed scope, exit) — all
+  sit behind staff auth, and proxy login additionally needs the single platform
+  admin account.
 
 ## Lint
 

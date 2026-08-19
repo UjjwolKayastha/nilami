@@ -42,6 +42,9 @@ const en = {
     closedOn: (d: string) => `Closed ${d}`,
     viewOnMap: "View on map",
     goToPhoto: (n: number) => `Go to photo ${n}`,
+    previousPhoto: "Previous photo",
+    nextPhoto: "Next photo",
+    photosPending: "Photographs pending",
     photoOf: (n: number, total: number) => `Photo ${n} of ${total}`,
   },
   home: {
@@ -296,6 +299,9 @@ const ne: typeof en = {
     closedOn: (d: string) => `${d} मा बन्द`,
     viewOnMap: "नक्सामा हेर्नुहोस्",
     goToPhoto: (n: number) => `तस्बिर ${n} मा जानुहोस्`,
+    previousPhoto: "अघिल्लो तस्बिर",
+    nextPhoto: "अर्को तस्बिर",
+    photosPending: "तस्बिरहरू आउन बाँकी",
     photoOf: (n: number, total: number) => `${total} मध्ये तस्बिर ${n}`,
   },
   home: {

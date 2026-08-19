@@ -134,7 +134,7 @@ export default async function AuctionDetailPage({
               )}
             </div>
 
-            <Gallery images={p.images ?? []} title={p.title} />
+            <Gallery images={p.images ?? []} title={p.title} lang={lang} />
           </div>
 
           {/* Bid panel. On a phone it follows the gallery, so the price, the

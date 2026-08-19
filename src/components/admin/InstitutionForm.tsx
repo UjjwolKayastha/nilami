@@ -84,7 +84,16 @@ export function InstitutionForm({
         </label>
       )}
 
-      <fieldset disabled={pending} className={pending ? "opacity-50" : undefined}>
+      {/* Keyed on the institution so switching rebuilds every field from the
+          new record. Without it the logo keeps the previous institution's
+          state — useState only seeds on mount — and a half-typed edit survives
+          the switch, so saving would write either onto the wrong institution.
+          The picker sits outside, keeping its in-flight selection. */}
+      <fieldset
+        key={org.id}
+        disabled={pending}
+        className={pending ? "opacity-50" : undefined}
+      >
       <section className="space-y-4">
         <div>
           <h2 className="font-semibold text-evergreen-900">{org.name}</h2>

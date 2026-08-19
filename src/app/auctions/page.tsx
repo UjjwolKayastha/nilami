@@ -173,6 +173,18 @@ export default async function AuctionsPage({
                 />
               )}
             </div>
+            {/* On a phone the control sits above the cards, where it is
+                reachable without scrolling the whole page first. */}
+            <Pagination
+              basePath="/auctions"
+              params={params}
+              page={page}
+              totalPages={totalPages}
+              lang={lang}
+              variant="compact"
+              className="mb-8 flex sm:hidden"
+            />
+
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {pageItems.map((a, i) => (
                 <AuctionCard
@@ -190,6 +202,7 @@ export default async function AuctionsPage({
               page={page}
               totalPages={totalPages}
               lang={lang}
+              className="mt-14 hidden sm:flex"
             />
           </>
         )}

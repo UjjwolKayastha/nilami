@@ -58,12 +58,15 @@ export function Countdown({
     { v: t.m, l: cd.min },
     { v: t.s, l: cd.sec },
   ];
+  // The four cells are the widest thing in the bid panel, so their floor is
+  // the floor of the whole sidebar column: 4 x min-w-16 + 3 x gap-3 = 292px,
+  // more than a 320px screen can give the card. They tighten below sm.
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2 sm:gap-3">
       {cells.map((c) => (
         <div
           key={c.l}
-          className="flex min-w-16 flex-col items-center rounded-xl border border-ink/10 bg-cream px-3 py-2.5"
+          className="flex min-w-12 flex-col items-center rounded-xl border border-ink/10 bg-cream px-2 py-2.5 sm:min-w-16 sm:px-3"
         >
           <span className="font-display text-2xl font-semibold tabular-nums text-evergreen-900">
             {String(c.v).padStart(2, "0")}

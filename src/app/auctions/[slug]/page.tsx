@@ -34,10 +34,13 @@ export async function generateMetadata({
   return { title: auction?.property.title ?? "Property" };
 }
 
+// Below sm the label gives way instead of holding its full width: at 320px a
+// shrink-0 label left the value about 39px wide, breaking a date across five
+// lines. Both sides wrap now, and the row ends up shorter for it.
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-6 py-3">
-      <dt className="shrink-0 text-sm text-ink-soft">{label}</dt>
+    <div className="flex items-baseline justify-between gap-3 py-3 sm:gap-6">
+      <dt className="text-sm text-ink-soft sm:shrink-0">{label}</dt>
       <dd className="text-right text-sm font-medium text-ink">{value}</dd>
     </div>
   );
@@ -134,7 +137,7 @@ export default async function AuctionDetailPage({
           {/* Bid panel. On a phone it follows the gallery, so the price, the
               countdown and the contact button are reachable without scrolling
               past the whole listing; on desktop it is the sticky right column. */}
-          <aside className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto">
+          <aside className="min-w-0 lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto">
             <div className="overflow-hidden rounded-3xl border border-ink/8 bg-white shadow-lift">
               <div className="bg-evergreen-900 p-7 text-ivory">
                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-ivory/60">

@@ -57,6 +57,8 @@ export function Pagination({
   page,
   totalPages,
   lang = "en",
+  variant = "numbered",
+  className = "flex",
 }: {
   basePath: string;
   /** Current query params; everything but `page` is carried across. */
@@ -64,6 +66,11 @@ export function Pagination({
   page: number;
   totalPages: number;
   lang?: Lang;
+  /** "compact" reads "Page 2 of 5" — for narrow screens, where a long run of
+   *  numbers would push the control past the edge. */
+  variant?: "numbered" | "compact";
+  /** Display + spacing utilities; the caller decides which breakpoint shows it. */
+  className?: string;
 }) {
   if (totalPages <= 1) return null;
   const l = dictionaries[lang].listing;
@@ -73,7 +80,7 @@ export function Pagination({
     listingHref(basePath, params, { page: n === 1 ? undefined : String(n) });
 
   return (
-    <nav aria-label={l.pagination} className="mt-14 flex justify-center">
+    <nav aria-label={l.pagination} className={`justify-center ${className}`}>
       <div className="inline-flex items-center gap-1 rounded-full border border-ink/10 bg-white p-1.5 shadow-card">
         <Arrow
           dir="left"
@@ -81,14 +88,12 @@ export function Pagination({
           label={l.prevPage}
         />
 
-        {/* Numbers on tablet and up; a phone gets "Page 2 of 5" so a long run
-            can never push the control past the screen edge. */}
-        <span className="px-3 text-sm font-medium tabular-nums text-ink-soft sm:hidden">
-          {l.pageOf(page, totalPages)}
-        </span>
-
-        <span className="hidden items-center gap-1 sm:inline-flex">
-          {pageWindow(page, totalPages).map((item, i) =>
+        {variant === "compact" ? (
+          <span className="px-3 text-sm font-medium tabular-nums text-ink-soft">
+            {l.pageOf(page, totalPages)}
+          </span>
+        ) : (
+          pageWindow(page, totalPages).map((item, i) =>
             item === "gap" ? (
               <span
                 key={`gap-${i}`}
@@ -115,8 +120,8 @@ export function Pagination({
                 {item}
               </Link>
             )
-          )}
-        </span>
+          )
+        )}
 
         <Arrow
           dir="right"

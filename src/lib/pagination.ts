@@ -1,7 +1,7 @@
 /** Page sizes offered on the listings page. Multiples of 2 and 3 so the last
  *  row of the responsive grid is never left ragged. */
 export const PAGE_SIZES = [6, 12, 24, 48] as const;
-export const DEFAULT_PAGE_SIZE = 12;
+export const DEFAULT_PAGE_SIZE = 6;
 
 export type ListingParams = Record<string, string | undefined>;
 

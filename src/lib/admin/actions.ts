@@ -301,3 +301,29 @@ export async function stopViewAs() {
   revalidatePath("/admin", "layout");
   redirect("/admin/staff");
 }
+
+/**
+ * Save an institution's logo, website and contact details.
+ *
+ * The write goes through update_organization_branding, which re-checks the
+ * caller server-side and touches only those columns — staff may edit their own
+ * institution, a platform admin any, and neither can rename one or approve it
+ * through this path.
+ */
+export async function updateOrganizationBranding(formData: FormData) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_organization_branding", {
+    p_org: formData.get("organization_id") as string,
+    p_logo_url: (formData.get("logo_url") as string) ?? "",
+    p_website: (formData.get("website") as string) ?? "",
+    p_contact_email: (formData.get("contact_email") as string) ?? "",
+    p_contact_phone: (formData.get("contact_phone") as string) ?? "",
+    p_address: (formData.get("address") as string) ?? "",
+    p_address_np: (formData.get("address_np") as string) ?? "",
+  });
+  if (error) throw new Error(error.message);
+
+  // The institution card is rendered on every listing page.
+  revalidatePath("/auctions", "layout");
+  revalidatePath("/admin/institution");
+}

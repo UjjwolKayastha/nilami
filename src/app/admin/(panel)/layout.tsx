@@ -68,6 +68,7 @@ export default async function AdminLayout({
     { href: "/admin/properties", label: "Properties" },
     { href: "/admin/auctions", label: "Auctions" },
     { href: "/admin/bidders", label: "Bidders" },
+    { href: "/admin/institution", label: "Institution" },
     ...(isPlatformAdmin ? [{ href: "/admin/staff", label: "Staff" }] : []),
   ];
 

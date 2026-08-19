@@ -101,7 +101,7 @@ export default async function AuctionDetailPage({
 
         <div className="grid gap-10 lg:grid-cols-[1.5fr_1fr]">
           {/* Header and gallery */}
-          <div className="space-y-10 lg:col-start-1 lg:row-start-1">
+          <div className="min-w-0 space-y-10 lg:col-start-1 lg:row-start-1">
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
                 <StatusBadge status={status} lang={lang} />
@@ -200,7 +200,7 @@ export default async function AuctionDetailPage({
           </aside>
 
           {/* Description, video, map, facts, terms */}
-          <div className="space-y-10 lg:col-start-1 lg:row-start-2">
+          <div className="min-w-0 space-y-10 lg:col-start-1 lg:row-start-2">
             <section>
               <h2 className="font-display text-2xl font-semibold text-evergreen-900">
                 {t.detail.about}

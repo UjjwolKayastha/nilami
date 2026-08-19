@@ -34,13 +34,16 @@ export function Gallery({
         />
       </div>
       {images.length > 1 && (
-        <div className="flex gap-3">
+        // Scrolls rather than widening the page: four 96px thumbs plus gaps is
+        // 420px of min-content, which a grid column with the default
+        // `min-width:auto` would otherwise have to grow to accommodate.
+        <div className="flex gap-3 overflow-x-auto">
           {images.map((im, i) => (
             <button
               key={im.id}
               onClick={() => setActive(i)}
               aria-label={`Photo ${i + 1}`}
-              className={`relative aspect-[4/3] w-24 overflow-hidden rounded-xl border-2 transition-all ${
+              className={`relative aspect-[4/3] w-24 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${
                 i === active
                   ? "border-brass-500 opacity-100"
                   : "border-transparent opacity-60 hover:opacity-100"

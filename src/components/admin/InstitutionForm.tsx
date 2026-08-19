@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { LogoUploader } from "@/components/admin/LogoUploader";
 import { SubmitButton } from "@/components/admin/SubmitButton";
 import { updateOrganizationBranding } from "@/lib/admin/actions";
@@ -40,6 +41,15 @@ export function InstitutionForm({
   organizations: { id: string; name: string }[];
 }) {
   const router = useRouter();
+  // Switching institution is a server round-trip. Without holding the choice
+  // locally the select is re-rendered from the institution still on screen, so
+  // it visibly snaps back to the previous one until the new page arrives — on a
+  // slow connection that reads as the control doing nothing at all.
+  const [pending, startTransition] = useTransition();
+  const [target, setTarget] = useState<string | null>(null);
+  // While the switch is in flight show where we are going; once it lands the
+  // server's institution is the truth again, so no state needs resetting.
+  const choice = pending && target ? target : org.id;
 
   return (
     <form
@@ -50,11 +60,20 @@ export function InstitutionForm({
 
       {organizations.length > 0 && (
         <label className="block space-y-1.5">
-          <span className={labelCls}>Editing</span>
+          <span className={labelCls}>
+            Editing{pending && " · loading…"}
+          </span>
           <select
-            value={org.id}
-            onChange={(e) => router.push(`/admin/institution?org=${e.target.value}`)}
-            className={inputCls}
+            value={choice}
+            disabled={pending}
+            onChange={(e) => {
+              const next = e.target.value;
+              setTarget(next);
+              startTransition(() =>
+                router.push(`/admin/institution?org=${next}`)
+              );
+            }}
+            className={`${inputCls} disabled:opacity-60`}
           >
             {organizations.map((o) => (
               <option key={o.id} value={o.id}>
@@ -65,6 +84,7 @@ export function InstitutionForm({
         </label>
       )}
 
+      <fieldset disabled={pending} className={pending ? "opacity-50" : undefined}>
       <section className="space-y-4">
         <div>
           <h2 className="font-semibold text-evergreen-900">{org.name}</h2>
@@ -132,6 +152,7 @@ export function InstitutionForm({
           Save changes
         </SubmitButton>
       </div>
+      </fieldset>
     </form>
   );
 }

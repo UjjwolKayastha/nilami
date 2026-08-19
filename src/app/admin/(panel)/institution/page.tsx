@@ -25,8 +25,14 @@ export default async function InstitutionPage({
     .order("name");
   const options = all ?? [];
 
-  // A platform admin may choose; everyone else is pinned to their own, whatever
-  // ?org= says — the database re-checks this regardless.
+  // Only a platform admin may choose. For everyone else ?org= previously fell
+  // through silently, so the address bar could name one institution while the
+  // page showed another — indistinguishable from the page ignoring the change.
+  // Send them to the clean URL instead, so it never describes something false.
+  if (!isPlatformAdmin && requested && requested !== organizationId) {
+    redirect("/admin/institution");
+  }
+
   const targetId = isPlatformAdmin
     ? requested || options[0]?.id
     : organizationId;

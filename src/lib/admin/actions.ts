@@ -10,14 +10,8 @@ import {
 } from "@/lib/admin/view-as";
 import { parseLandArea } from "@/lib/nepal/land-area";
 import { joinRoadAccess } from "@/lib/nepal/road-access";
+import { slugify } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
 
 function num(v: FormDataEntryValue | null): number | null {
   if (v == null || v === "") return null;
@@ -57,10 +51,20 @@ export async function upsertProperty(formData: FormData) {
     ((formData.get("organization_id") as string) || null);
   if (!organizationId) throw new Error("An organization is required.");
 
+  // A slug typed into the form is normalised too — stored verbatim it could
+  // carry spaces or capitals, which produce a URL the listing page cannot
+  // match once Next hands the segment over still percent-encoded.
+  const propertySlug =
+    slugify((formData.get("slug") as string) ?? "") || slugify(title);
+  if (!propertySlug)
+    throw new Error(
+      "Could not build a slug from the title — please enter one in the Slug field."
+    );
+
   const row = {
     organization_id: organizationId,
     title,
-    slug: (formData.get("slug") as string)?.trim() || slugify(title),
+    slug: propertySlug,
     type: formData.get("type") as string,
     province: (formData.get("province") as string).trim(),
     district: (formData.get("district") as string).trim(),

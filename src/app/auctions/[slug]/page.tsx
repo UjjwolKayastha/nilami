@@ -22,6 +22,7 @@ import {
 import { orgName } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
 import { getAuctionBySlug } from "@/lib/queries";
+import { decodeSlug } from "@/lib/slug";
 import { videoEmbed } from "@/lib/video";
 
 export async function generateMetadata({
@@ -29,7 +30,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlug(rawSlug);
   const auction = await getAuctionBySlug(slug);
   return { title: auction?.property.title ?? "Property" };
 }
@@ -52,7 +54,8 @@ export default async function AuctionDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { lang, t } = await getT();
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeSlug(rawSlug);
   const auction = await getAuctionBySlug(slug);
   if (!auction) notFound();
   const p = auction.property;

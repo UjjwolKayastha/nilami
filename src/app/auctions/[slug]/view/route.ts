@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import { decodeSlug } from "@/lib/slug";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -20,14 +21,17 @@ export async function POST(
   _request: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  // Decoded for the lookup; the cookie keeps the raw segment so its path
+  // matches the URL the browser actually requests.
+  const slug = decodeSlug(rawSlug);
 
   const ua = (await headers()).get("user-agent") ?? "";
   if (!ua || BOT.test(ua)) return Response.json({ counted: false });
 
   // The cookie is scoped to this listing's path, so it is only ever sent back
   // on requests for this listing instead of riding along on every request.
-  const path = `/auctions/${slug}`;
+  const path = `/auctions/${rawSlug}`;
   const jar = await cookies();
   if (jar.get(COOKIE)) return Response.json({ counted: false });
 

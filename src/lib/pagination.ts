@@ -1,14 +1,23 @@
 /** Page sizes offered on the listings page. Multiples of 2 and 3 so the last
  *  row of the responsive grid is never left ragged. */
 export const PAGE_SIZES = [6, 12, 24, 48] as const;
-export const DEFAULT_PAGE_SIZE = 6;
+
+/** A phone shows one column, so twelve cards is a long scroll; a desktop grid
+ *  fits twelve in four rows. The default follows the device — see
+ *  `isMobileRequest` — and an explicit ?size= overrides either. */
+export const DEFAULT_PAGE_SIZE_MOBILE = 6;
+export const DEFAULT_PAGE_SIZE_DESKTOP = 12;
 
 export type ListingParams = Record<string, string | undefined>;
 
-/** Clamp whatever arrived in ?size= to one of the offered sizes. */
-export function parsePageSize(raw: string | undefined): number {
+/** Clamp whatever arrived in ?size= to one of the offered sizes, falling back
+ *  to this request's device-appropriate default. */
+export function parsePageSize(
+  raw: string | undefined,
+  fallback: number = DEFAULT_PAGE_SIZE_DESKTOP
+): number {
   const n = Number(raw);
-  return (PAGE_SIZES as readonly number[]).includes(n) ? n : DEFAULT_PAGE_SIZE;
+  return (PAGE_SIZES as readonly number[]).includes(n) ? n : fallback;
 }
 
 /** Clamp ?page= into 1…totalPages, so a stale or hand-typed page still renders. */

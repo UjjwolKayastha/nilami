@@ -7,8 +7,10 @@ import { Footer } from "@/components/site/Footer";
 import { Header } from "@/components/site/Header";
 import { orgName } from "@/lib/i18n/dictionaries";
 import { getT } from "@/lib/i18n/server";
+import { isMobileRequest } from "@/lib/device";
 import {
-  DEFAULT_PAGE_SIZE,
+  DEFAULT_PAGE_SIZE_DESKTOP,
+  DEFAULT_PAGE_SIZE_MOBILE,
   listingHref,
   PAGE_SIZES,
   parsePage,
@@ -33,6 +35,10 @@ export default async function AuctionsPage({
 }) {
   const { lang, t } = await getT();
   const params = await searchParams;
+  // Twelve per page on a desktop grid, six on a phone's single column.
+  const defaultSize = (await isMobileRequest())
+    ? DEFAULT_PAGE_SIZE_MOBILE
+    : DEFAULT_PAGE_SIZE_DESKTOP;
   const [auctions, districts, orgs] = await Promise.all([
     getPublicAuctions(params),
     getDistricts(),
@@ -58,7 +64,7 @@ export default async function AuctionsPage({
   // type/district/org/q in JS after the fetch, so the true total is only known
   // once that is done.
   const total = auctions.length;
-  const size = parsePageSize(params.size);
+  const size = parsePageSize(params.size, defaultSize);
   const totalPages = Math.ceil(total / size);
   const page = parsePage(params.page, totalPages);
   const from = (page - 1) * size;
@@ -68,12 +74,12 @@ export default async function AuctionsPage({
   const active = Object.entries(params).filter(
     ([k, v]) => v && k !== "page" && k !== "size"
   );
-  const showSizeSelect = total > PAGE_SIZES[0] || size !== DEFAULT_PAGE_SIZE;
+  const showSizeSelect = total > PAGE_SIZES[0] || size !== defaultSize;
   // Clearing drops the filters and the page, but keeps the reader's page size.
   const clearHref = listingHref(
     "/auctions",
     {},
-    { size: size === DEFAULT_PAGE_SIZE ? undefined : String(size) }
+    { size: size === defaultSize ? undefined : String(size) }
   );
   const selectCls =
     "h-11 w-full rounded-xl border border-ink/12 bg-ivory px-3 text-sm outline-none focus:border-evergreen-600 sm:w-auto";
@@ -129,7 +135,7 @@ export default async function AuctionsPage({
             ))}
           </select>
           {/* Applying filters starts over at page 1, but keeps the page size. */}
-          {size !== DEFAULT_PAGE_SIZE && (
+          {size !== defaultSize && (
             <input type="hidden" name="size" value={size} />
           )}
           <button

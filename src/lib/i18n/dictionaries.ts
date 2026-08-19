@@ -6,6 +6,7 @@ const en = {
     howItWorks: "How it works",
     staffSignIn: "Staff sign in",
     dashboard: "Dashboard",
+    menu: "Menu",
   },
   common: {
     statuses: {
@@ -259,6 +260,7 @@ const ne: typeof en = {
     howItWorks: "प्रक्रिया",
     staffSignIn: "कर्मचारी लगइन",
     dashboard: "ड्यासबोर्ड",
+    menu: "मेनु",
   },
   common: {
     statuses: {
